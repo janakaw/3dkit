@@ -7,6 +7,8 @@ import p5 from "@/assets/p5.jpg.asset.json";
 import p6 from "@/assets/p6.jpg.asset.json";
 import p7 from "@/assets/p7.jpg.asset.json";
 import p8 from "@/assets/p8.jpg.asset.json";
+import p9 from "@/assets/p9.jpg.asset.json";
+import p10 from "@/assets/p10.jpg.asset.json";
 
 export const heroImage = hero.url;
 
@@ -23,7 +25,43 @@ export type Product = {
   description: string;
   specs: string[];
   isNew?: boolean;
+  subcategory?: string;
 };
+
+export type PolyTier = "high" | "mid";
+
+export type Variant = {
+  polys: string;
+  price: number;
+  textures: string;
+  formats: string;
+  label: string;
+  note: string;
+};
+
+const polyCount = (polys: string) => Number(polys.replace(/[^0-9]/g, "")) || 0;
+
+export function getVariant(product: Product, tier: PolyTier): Variant {
+  if (tier === "high") {
+    return {
+      polys: product.polys,
+      price: product.price,
+      textures: product.textures,
+      formats: product.formats,
+      label: "High-poly",
+      note: "Archviz render ready (Corona / V-Ray / FStorm)",
+    };
+  }
+  const count = Math.round(polyCount(product.polys) * 0.12);
+  return {
+    polys: `${count.toLocaleString()} tris`,
+    price: product.price === 0 ? 0 : Math.max(4, Math.round(product.price * 0.6)),
+    textures: "2K PBR, baked & atlased",
+    formats: "FBX, GLB, OBJ (Unreal / Unity)",
+    label: "Mid-poly",
+    note: "Game-ready, LODs + baked normals",
+  };
+}
 
 export const products: Product[] = [
   {
@@ -159,6 +197,7 @@ export const products: Product[] = [
     slug: "yves-complete-living-room-set",
     name: "Yves Complete Living Room Set",
     category: "Set",
+    subcategory: "Living Set",
     price: 49,
     image: p7.url,
     polys: "345,000 polys (set total)",
@@ -179,7 +218,7 @@ export const products: Product[] = [
   {
     slug: "marble-tripod-side-table",
     name: "Marble Tripod Side Table",
-    category: "Coffee Table",
+    category: "Side Table",
     price: 0,
     image: p8.url,
     polys: "9,000 polys",
@@ -196,7 +235,64 @@ export const products: Product[] = [
       "Licence: Free for commercial use",
     ],
   },
+  {
+    slug: "harlow-dining-set",
+    name: "Harlow Dining Set",
+    category: "Set",
+    subcategory: "Dining Set",
+    price: 39,
+    image: p9.url,
+    polys: "180,000 polys (set total)",
+    formats: "MAX (2020+), FBX, OBJ",
+    textures: "4K PBR",
+    renderers: "Corona, V-Ray, FStorm",
+    description:
+      "Walnut dining table with six upholstered chairs and a small table-top styling kit. Chairs are separate objects with adjustable rotation pivots for natural scene staging.",
+    specs: [
+      "Table: W200cm x D95cm x H75cm",
+      "Chair: W55cm x D58cm x H82cm",
+      "Geometry: Quad-dominant, 180,000 polys",
+      "Textures: 4K PBR walnut & wool",
+      "Render Engines: Corona, V-Ray, FStorm",
+      "Support: Lifetime updates",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "azure-patio-set",
+    name: "Azure Patio Set",
+    category: "Set",
+    subcategory: "Patio Set",
+    price: 34,
+    image: p10.url,
+    polys: "210,000 polys (set total)",
+    formats: "MAX (2020+), FBX, OBJ",
+    textures: "4K PBR",
+    renderers: "Corona, V-Ray, FStorm",
+    description:
+      "Outdoor teak and rattan lounge collection with parasol, low table and weather-worn cushion materials — built for exterior and terrace visualisation.",
+    specs: [
+      "Sofa: W180cm x D80cm x H72cm",
+      "Parasol: D250cm x H240cm",
+      "Geometry: Quad-dominant, 210,000 polys",
+      "Textures: 4K PBR teak, rattan, outdoor fabric",
+      "Render Engines: Corona, V-Ray, FStorm",
+      "Support: Lifetime updates",
+    ],
+  },
 ];
+
+export const categories = [
+  "Armchair",
+  "Sofa",
+  "Coffee Table",
+  "Cabinet",
+  "Side Table",
+  "Ottoman",
+  "Set",
+] as const;
+
+export const setSubcategories = ["Living Set", "Dining Set", "Patio Set"] as const;
 
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
 export const newReleases = products.filter((p) => p.isNew);
