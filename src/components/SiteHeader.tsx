@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Search, ShoppingCart } from "lucide-react";
-
-const categories = ["Armchair", "Sofa", "Coffee Table", "Cabinet", "Ottoman", "Set"];
+import { ChevronDown, Search, ShoppingCart } from "lucide-react";
+import { categories, setSubcategories } from "@/lib/products";
 
 export function SiteHeader() {
   return (
@@ -11,19 +10,46 @@ export function SiteHeader() {
           3Dkit
         </Link>
         <nav className="hidden items-center gap-5 lg:flex">
-          {categories.map((c) => (
-            <Link
-              key={c}
-              to="/"
-              hash={c.toLowerCase().replace(" ", "-")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {c}
-            </Link>
-          ))}
-          <span className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-foreground">
-            Free
-          </span>
+          {categories.map((c) =>
+            c === "Set" ? (
+              <div key={c} className="group relative">
+                <button className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  Set
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                <div className="invisible absolute left-0 top-full w-44 rounded-xl border border-border bg-card p-2 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
+                  {setSubcategories.map((s) => (
+                    <Link
+                      key={s}
+                      to="/"
+                      search={{ category: "Set", sub: s }}
+                      className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    >
+                      {s}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={c}
+                to="/"
+                search={{ category: c }}
+                className="py-5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {c}
+              </Link>
+            ),
+          )}
+          <Link
+            to="/free"
+            className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            FREE3D
+          </Link>
+          <Link to="/about" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            About
+          </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
           <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -49,6 +75,12 @@ export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-border py-8">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-6 px-5 text-sm text-muted-foreground">
+        <Link to="/about" className="hover:text-foreground">
+          About
+        </Link>
+        <Link to="/free" className="hover:text-foreground">
+          Free models
+        </Link>
         <span>Terms</span>
         <span>Support</span>
         <span>Contact</span>
