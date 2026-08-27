@@ -12,12 +12,12 @@ import {
   type PolyTier,
 } from "@/lib/products";
 
-type IndexSearch = { category?: string; sub?: string };
+type IndexSearch = { category?: string | undefined; sub?: string | undefined };
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): IndexSearch => ({
-    category: typeof search.category === "string" ? search.category : undefined,
-    sub: typeof search.sub === "string" ? search.sub : undefined,
+    category: typeof search["category"] === "string" ? (search["category"] as string) : undefined,
+    sub: typeof search["sub"] === "string" ? (search["sub"] as string) : undefined,
   }),
   head: () => ({
     meta: [
