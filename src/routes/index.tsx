@@ -95,7 +95,7 @@ function Index() {
               </a>
               <Link
                 to="/midpoly"
-                className="inline-flex w-fit items-center rounded-full bg-primary px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex w-fit items-center rounded-full bg-brand px-7 py-3 text-sm font-medium uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
               >
                 Mid-poly for game →
               </Link>
@@ -132,7 +132,7 @@ function Index() {
               onClick={() => setSearch({ style })}
               className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                 !category
-                  ? "border-foreground bg-primary text-primary-foreground"
+                  ? "border-brand bg-brand text-brand-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -144,7 +144,7 @@ function Index() {
                 onClick={() => setSearch({ category: c, style })}
                 className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                   category === c && !sub
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-brand bg-brand text-brand-foreground"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -184,7 +184,7 @@ function Index() {
               onClick={() => setSearch({ category, sub })}
               className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                 !style
-                  ? "border-foreground bg-primary text-primary-foreground"
+                  ? "border-brand bg-brand text-brand-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -198,7 +198,7 @@ function Index() {
                 }
                 className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                   style === s
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-brand bg-brand text-brand-foreground"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
               >

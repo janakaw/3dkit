@@ -29,6 +29,7 @@ export function SiteHeader() {
                       key={s}
                       to="/"
                       search={{ category: "Set", sub: s }}
+                      hash="collection"
                       className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       {s}
@@ -41,6 +42,7 @@ export function SiteHeader() {
                 key={c}
                 to="/"
                 search={{ category: c }}
+                hash="collection"
                 className="py-5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {c}
@@ -49,7 +51,7 @@ export function SiteHeader() {
           )}
           <Link
             to="/midpoly"
-            className="rounded-full border border-primary px-3 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            className="rounded-full border border-brand px-3 py-1 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
           >
             Mid-Poly Furniture
           </Link>
@@ -67,7 +69,7 @@ export function SiteHeader() {
           <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
           <div className="relative">
             <ShoppingCart className="h-5 w-5 text-muted-foreground" aria-hidden />
-            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-semibold text-brand-foreground">
               3
             </span>
           </div>
@@ -76,7 +78,7 @@ export function SiteHeader() {
           </button>
           <button
             onClick={() => setShowSubscribe(true)}
-            className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90"
           >
             Join
           </button>

@@ -1,40 +1,45 @@
 import { Check, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const plans = [
   {
     name: "Freelancer Plan",
     price: 19,
-    target: "For 1-person indie developers, students, and freelancers with under $100k annual revenue.",
+    target: "For 1-man indie developers, students, or freelancers with under $100k annual revenue.",
     features: [
-      "Unlimited downloads, all categories",
+      "5 model downloads per month",
+      "Single-user commercial license for indie game releases",
       "Both high-poly and mid-poly builds",
-      "Commercial licence on every asset",
-      "Cancel anytime — keeps working till period end",
+      "Cancel anytime — files you downloaded stay licensed",
     ],
   },
   {
     name: "Studio Plan",
-    price: 29,
-    target: "For teams and studios of any size, with no revenue cap.",
+    price: 49,
+    target: "For small-to-medium game studios or companies with over $100k annual revenue.",
     features: [
-      "Everything in Freelancer",
+      "15 model downloads per month",
+      "Full commercial license with no revenue limits",
       "Unlimited team seats on one account",
       "Priority support and asset requests",
-      "Cancel anytime — keeps working till period end",
     ],
   },
 ];
 
 export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <button
         aria-label="Close subscription dialog"
         onClick={onClose}
-        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-foreground/60 backdrop-blur-sm"
       />
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-7 shadow-2xl md:p-10">
+      <div className="relative my-auto max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-card p-7 shadow-2xl md:p-10">
         <button
           onClick={onClose}
           aria-label="Close"
@@ -45,11 +50,10 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
         <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight text-foreground">
           Subscribe for unlimited access
         </h2>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          One subscription, the whole library. Download any model in both high-poly and mid-poly
-          builds, as often as you like — and cancel at any time from your account page. No
-          contract, no download limits, and every file you have already downloaded stays licensed
-          to you.
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Pick the plan that matches your studio size. Download high-poly archviz models and
+          mid-poly game-ready builds, cancel at any time from your account page, and keep every
+          file you have already downloaded.
         </p>
 
         <div className="mt-7 grid gap-5 md:grid-cols-2">
@@ -69,12 +73,12 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
               <ul className="mt-4 space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
                     {f}
                   </li>
                 ))}
               </ul>
-              <button className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90">
+              <button className="mt-6 rounded-full bg-brand px-6 py-3 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90">
                 Start free trial
               </button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
@@ -84,6 +88,7 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
