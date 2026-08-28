@@ -16,6 +16,7 @@ import { Route as FreeRouteImport } from './routes/free'
 import { Route as MidpolyRouteImport } from './routes/midpoly'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
+  id: '/category/$category',
+  path: '/category/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/category/$category'
     | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/category/$category'
     | '/product/$slug'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/category/$category'
     | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   MidpolyRoute: typeof MidpolyRoute
   SearchRoute: typeof SearchRoute
   SigninRoute: typeof SigninRoute
+  CategoryCategoryRoute: typeof CategoryCategoryRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/category/$category': {
+      id: '/category/$category'
+      path: '/category/$category'
+      fullPath: '/category/$category'
+      preLoaderRoute: typeof CategoryCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   MidpolyRoute: MidpolyRoute,
   SearchRoute: SearchRoute,
   SigninRoute: SigninRoute,
+  CategoryCategoryRoute: CategoryCategoryRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
