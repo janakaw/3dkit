@@ -13,7 +13,7 @@ export function SiteHeader() {
           3Dkit
         </Link>
         <nav className="hidden items-center gap-5 lg:flex">
-          {categories.map((c) =>
+          {categories.filter((c) => c !== "Side Table").map((c) =>
             c === "Set" ? (
               <div key={c} className="group relative">
                 <button className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
