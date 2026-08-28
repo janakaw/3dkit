@@ -1,4 +1,5 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Check, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
