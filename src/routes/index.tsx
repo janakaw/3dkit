@@ -87,20 +87,20 @@ function Index() {
           <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.30_0.003_260/0.72)] via-[oklch(0.35_0.003_260/0.38)] to-transparent" />
 
           <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-14">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary-foreground/75">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/75">
               For architects, designers and game creators
             </p>
-            <h1 className="mt-3 max-w-2xl font-display text-3xl font-extrabold uppercase leading-[1.05] tracking-tight text-primary-foreground md:text-5xl">
+            <h1 className="mt-3 max-w-2xl font-display text-3xl font-extrabold uppercase leading-[1.05] tracking-tight text-white md:text-5xl">
               Premium 3D furniture sets, ready for render or engine.
             </h1>
-            <p className="mt-4 max-w-md text-sm text-primary-foreground/85 md:text-base">
+            <p className="mt-4 max-w-md text-sm text-white/85 md:text-base">
               Access custom-tailored asset sets — available by subscription or individual model
               sale — for archviz, interior designers, architects and game creators.
             </p>
             <div className="relative mt-7 flex flex-wrap items-center gap-3">
               <a
                 href="#collection"
-                className="inline-flex w-fit items-center rounded-full border border-primary-foreground/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
+                className="inline-flex w-fit items-center rounded-full border border-white/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-white hover:text-black"
               >
                 Explore the collection
               </a>
@@ -112,8 +112,8 @@ function Index() {
               </Link>
               <button
                 onClick={openSubscribe}
-                className="group absolute right-6 top-1/2 hidden -translate-y-1/2 items-center gap-6 overflow-hidden rounded-2xl bg-brand py-4 pl-7 pr-6 text-left text-brand-foreground shadow-xl ring-1 ring-primary-foreground/20 transition-transform hover:scale-[1.02] lg:flex">
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                className="group absolute right-6 top-1/2 hidden -translate-y-1/2 items-center gap-6 overflow-hidden rounded-2xl bg-brand py-4 pl-7 pr-6 text-left text-brand-foreground shadow-xl ring-1 ring-white/20 transition-transform hover:scale-[1.02] lg:flex">
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <span className="relative">
                   <span className="block text-xs font-bold uppercase tracking-[0.2em] opacity-90">
                     Unlimited access
@@ -122,7 +122,7 @@ function Index() {
                     Subscribe from $19/mo
                   </span>
                 </span>
-                <span className="relative whitespace-nowrap rounded-full bg-primary-foreground/15 px-5 py-2.5 text-xs font-bold uppercase tracking-wide">
+                <span className="relative whitespace-nowrap rounded-full bg-white/15 px-5 py-2.5 text-xs font-bold uppercase tracking-wide text-white">
                   Cancel anytime →
                 </span>
               </button>
