@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 type Section = { heading: string; body: string };
 
 export function LegalPage({
