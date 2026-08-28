@@ -4,12 +4,16 @@ import {
   Box,
   ChevronDown,
   Download,
+  Facebook,
   FileText,
   Grid2x2,
+  Instagram,
   LifeBuoy,
+  Music2,
   RefreshCw,
   ShoppingCart,
   Sparkles,
+  Youtube,
 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
@@ -52,16 +56,21 @@ export const Route = createFileRoute("/product/$slug")({
   component: ProductPage,
 });
 
-const highFormats = [
-  "FBX",
-  "OBJ",
-  "3ds Max (.max)",
-  "3ds Max + Corona",
-  "3ds Max + V-Ray",
-  "Blender (.blend)",
+const highFormats: Array<[string, string]> = [
+  ["FBX", "184 MB"],
+  ["OBJ", "212 MB"],
+  ["3ds Max (.max)", "236 MB"],
+  ["3ds Max + Corona", "248 MB"],
+  ["3ds Max + V-Ray", "251 MB"],
+  ["Blender (.blend)", "198 MB"],
 ];
 
-const midFormats = ["Unreal FBX (UE5-ready)", "Unity FBX (verified import)", "GLB / glTF", "OBJ"];
+const midFormats: Array<[string, string]> = [
+  ["Unreal FBX (UE5-ready)", "38 MB"],
+  ["Unity FBX (verified import)", "38 MB"],
+  ["GLB / glTF", "24 MB"],
+  ["OBJ", "31 MB"],
+];
 
 function ProductPage() {
   const { product } = Route.useLoaderData();
@@ -132,18 +141,6 @@ function ProductPage() {
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 {product.description}
               </p>
-
-              <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-foreground">
-                In the box
-              </h3>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {product.specs.map((s) => (
-                  <li key={s} className="flex gap-2 text-sm text-muted-foreground">
-                    <span aria-hidden>•</span>
-                    {s}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
 
@@ -163,7 +160,6 @@ function ProductPage() {
                   Buy individually
                 </p>
                 <p className="text-xl font-bold text-foreground">{formatPrice(variant.price)}</p>
-                <p className="text-[11px] text-muted-foreground">One-time purchase · yours forever</p>
               </div>
               <button className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90">
                 <ShoppingCart className="h-4 w-4" aria-hidden />
@@ -206,16 +202,16 @@ function ProductPage() {
               </button>
               {openDownload && (
                 <ul className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                  {formats.map((f) => (
+                  {formats.map(([f, size]) => (
                     <li key={f}>
-                      <button className="block w-full border-b border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors last:border-0 hover:bg-secondary hover:text-foreground">
-                        {f}
+                      <button className="flex w-full items-center justify-between border-b border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors last:border-0 hover:bg-secondary hover:text-foreground">
+                        <span>{f}</span>
+                        <span className="text-xs text-muted-foreground/70">{size}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="mt-2 text-[11px] text-muted-foreground">{variant.note}</p>
             </div>
 
             {/* Tech specs */}
@@ -233,23 +229,6 @@ function ProductPage() {
                 ))}
               </dl>
             </div>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              {tier === "mid" ? (
-                <Link to="/product/$slug" params={{ slug: product.slug }} className="underline">
-                  View the high-poly archviz version
-                </Link>
-              ) : (
-                <Link
-                  to="/product/$slug"
-                  params={{ slug: product.slug }}
-                  search={{ tier: "mid" }}
-                  className="underline"
-                >
-                  Need it game-ready? View the mid-poly version
-                </Link>
-              )}
-            </p>
           </aside>
         </div>
 
@@ -259,6 +238,42 @@ function ProductPage() {
             {related.map((p) => (
               <ProductCard key={p.slug} product={p} tier={tier} />
             ))}
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-border pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <Link to="/about" className="transition-colors hover:text-foreground">
+                About
+              </Link>
+              <span className="cursor-pointer transition-colors hover:text-foreground">Terms</span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Support
+              </span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Contact
+              </span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Standard License
+              </span>
+            </nav>
+            <div className="flex items-center gap-3">
+              {[
+                { icon: Youtube, label: "YouTube" },
+                { icon: Instagram, label: "Instagram" },
+                { icon: Facebook, label: "Facebook" },
+                { icon: Music2, label: "TikTok" },
+              ].map(({ icon: Icon, label }) => (
+                <button
+                  key={label}
+                  aria-label={label}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                >
+                  <Icon className="h-4 w-4" aria-hidden />
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       </div>
