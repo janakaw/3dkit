@@ -1,11 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Search, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Facebook, Instagram, Music2, Search, ShoppingCart, Youtube } from "lucide-react";
+import { useEffect, useState } from "react";
 import { categories, setSubcategories } from "@/lib/products";
-import { SubscribeModal } from "@/components/SubscribeModal";
+import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
 
 export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
+  useEffect(() => {
+    const open = () => setShowSubscribe(true);
+    window.addEventListener(SUBSCRIBE_EVENT, open);
+    return () => window.removeEventListener(SUBSCRIBE_EVENT, open);
+  }, []);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-[1400px] items-center gap-6 px-5">
@@ -66,16 +71,21 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
-          <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
-          <div className="relative">
-            <ShoppingCart className="h-5 w-5 text-muted-foreground" aria-hidden />
+          <Link to="/search" aria-label="Search models" className="text-muted-foreground transition-colors hover:text-foreground">
+            <Search className="h-5 w-5" aria-hidden />
+          </Link>
+          <Link to="/cart" aria-label="View cart" className="relative text-muted-foreground transition-colors hover:text-foreground">
+            <ShoppingCart className="h-5 w-5" aria-hidden />
             <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-semibold text-brand-foreground">
               3
             </span>
-          </div>
-          <button className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">
+          </Link>
+          <Link
+            to="/signin"
+            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+          >
             Sign In
-          </button>
+          </Link>
           <button
             onClick={() => setShowSubscribe(true)}
             className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90"
@@ -90,19 +100,44 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const socials = [
+    { icon: Youtube, label: "YouTube" },
+    { icon: Instagram, label: "Instagram" },
+    { icon: Facebook, label: "Facebook" },
+    { icon: Music2, label: "TikTok" },
+  ];
   return (
-    <footer className="mt-20 border-t border-border py-8">
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-6 px-5 text-sm text-muted-foreground">
-        <Link to="/about" className="hover:text-foreground">
-          About
-        </Link>
-        <Link to="/free" className="hover:text-foreground">
-          Free models
-        </Link>
-        <span>Terms</span>
-        <span>Support</span>
-        <span>Contact</span>
-        <span>3Dkit Docs</span>
+    <footer className="mt-20 border-t border-border py-10">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center gap-6 px-5">
+        <div className="flex items-center gap-4">
+          {socials.map(({ icon: Icon, label }) => (
+            <button
+              key={label}
+              aria-label={label}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
+            >
+              <Icon className="h-5 w-5" aria-hidden />
+            </button>
+          ))}
+        </div>
+        <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-base font-medium text-muted-foreground">
+          <Link to="/about" className="transition-colors hover:text-foreground">
+            About
+          </Link>
+          <span className="cursor-pointer transition-colors hover:text-foreground">Terms</span>
+          <span className="cursor-pointer transition-colors hover:text-foreground">
+            Standard License
+          </span>
+          <span className="cursor-pointer transition-colors hover:text-foreground">Support</span>
+          <span className="cursor-pointer transition-colors hover:text-foreground">Contact</span>
+          <Link to="/free" className="transition-colors hover:text-foreground">
+            Free models
+          </Link>
+        </nav>
+        <p className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} 3Dkit — original furniture models by our studio, licensed
+          for archviz, interior design and game development.
+        </p>
       </div>
     </footer>
   );
