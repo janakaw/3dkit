@@ -112,17 +112,18 @@ function Index() {
               </Link>
               <button
                 onClick={openSubscribe}
-                className="group absolute right-4 top-1/2 hidden w-64 -translate-y-1/2 overflow-hidden rounded-2xl bg-brand px-7 py-5 text-left text-brand-foreground shadow-lg ring-1 ring-primary-foreground/20 transition-transform hover:scale-[1.03] lg:block"
-              >
+                className="group absolute right-6 top-1/2 hidden -translate-y-1/2 items-center gap-6 overflow-hidden rounded-2xl bg-brand py-4 pl-7 pr-6 text-left text-brand-foreground shadow-xl ring-1 ring-primary-foreground/20 transition-transform hover:scale-[1.02] lg:flex">
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                <span className="relative block text-xs font-bold uppercase tracking-[0.2em] opacity-90">
-                  Unlimited access
+                <span className="relative">
+                  <span className="block text-xs font-bold uppercase tracking-[0.2em] opacity-90">
+                    Unlimited access
+                  </span>
+                  <span className="mt-1 block font-display text-xl font-extrabold uppercase tracking-tight">
+                    Subscribe from $19/mo
+                  </span>
                 </span>
-                <span className="relative mt-1 block font-display text-lg font-extrabold uppercase tracking-tight">
-                  Subscribe from $19/mo →
-                </span>
-                <span className="relative mt-1 block text-xs uppercase tracking-wide opacity-85">
-                  Cancel anytime · Join today
+                <span className="relative whitespace-nowrap rounded-full bg-primary-foreground/15 px-5 py-2.5 text-xs font-bold uppercase tracking-wide">
+                  Cancel anytime →
                 </span>
               </button>
             </div>

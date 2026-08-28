@@ -6,16 +6,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Facebook,
   FileText,
   Grid2x2,
-  Instagram,
   LifeBuoy,
-  Music2,
   RefreshCw,
   ShoppingCart,
   Sparkles,
-  Youtube,
 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
