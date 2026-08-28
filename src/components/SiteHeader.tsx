@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Search, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import { categories, setSubcategories } from "@/lib/products";
+import { SubscribeModal } from "@/components/SubscribeModal";
 
 export function SiteHeader() {
+  const [showSubscribe, setShowSubscribe] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-6 px-5">
@@ -62,11 +65,15 @@ export function SiteHeader() {
           <button className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">
             Sign In
           </button>
-          <button className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+          <button
+            onClick={() => setShowSubscribe(true)}
+            className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
             Join
           </button>
         </div>
       </div>
+      <SubscribeModal open={showSubscribe} onClose={() => setShowSubscribe(false)} />
     </header>
   );
 }

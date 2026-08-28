@@ -16,6 +16,7 @@ export type Product = {
   slug: string;
   name: string;
   category: string;
+  style: string;
   price: number;
   image: string;
   polys: string;
@@ -66,6 +67,7 @@ export function getVariant(product: Product, tier: PolyTier): Variant {
 export const products: Product[] = [
   {
     slug: "eames-lounge-chair",
+    style: "Mid-century",
     name: "Eames Lounge Chair",
     category: "Armchair",
     price: 19,
@@ -88,6 +90,7 @@ export const products: Product[] = [
   },
   {
     slug: "sloan-3-seater-sofa",
+    style: "Modern",
     name: "Sloan 3-Seater Sofa",
     category: "Sofa",
     price: 24,
@@ -110,6 +113,7 @@ export const products: Product[] = [
   },
   {
     slug: "noguchi-table",
+    style: "Mid-century",
     name: "Noguchi Table",
     category: "Coffee Table",
     price: 12,
@@ -132,6 +136,7 @@ export const products: Product[] = [
   },
   {
     slug: "oak-media-console",
+    style: "Scandinavian",
     name: "Oak Media Console",
     category: "Cabinet",
     price: 16,
@@ -154,6 +159,7 @@ export const products: Product[] = [
   },
   {
     slug: "olive-velvet-armchair",
+    style: "Modern",
     name: "Olive Velvet Armchair",
     category: "Armchair",
     price: 14,
@@ -175,6 +181,7 @@ export const products: Product[] = [
   },
   {
     slug: "cube-ottoman",
+    style: "Minimal",
     name: "Cube Ottoman",
     category: "Ottoman",
     price: 8,
@@ -195,6 +202,7 @@ export const products: Product[] = [
   },
   {
     slug: "yves-complete-living-room-set",
+    style: "Modern",
     name: "Yves Complete Living Room Set",
     category: "Set",
     subcategory: "Living Set",
@@ -217,6 +225,7 @@ export const products: Product[] = [
   },
   {
     slug: "marble-tripod-side-table",
+    style: "Minimal",
     name: "Marble Tripod Side Table",
     category: "Side Table",
     price: 0,
@@ -237,6 +246,7 @@ export const products: Product[] = [
   },
   {
     slug: "harlow-dining-set",
+    style: "Mid-century",
     name: "Harlow Dining Set",
     category: "Set",
     subcategory: "Dining Set",
@@ -260,6 +270,7 @@ export const products: Product[] = [
   },
   {
     slug: "azure-patio-set",
+    style: "Outdoor",
     name: "Azure Patio Set",
     category: "Set",
     subcategory: "Patio Set",
@@ -293,6 +304,8 @@ export const categories = [
 ] as const;
 
 export const setSubcategories = ["Living Set", "Dining Set", "Patio Set"] as const;
+
+export const styles = ["Mid-century", "Modern", "Scandinavian", "Minimal", "Outdoor"] as const;
 
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
 export const newReleases = products.filter((p) => p.isNew);
