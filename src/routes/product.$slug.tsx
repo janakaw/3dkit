@@ -52,16 +52,21 @@ export const Route = createFileRoute("/product/$slug")({
   component: ProductPage,
 });
 
-const highFormats = [
-  "FBX",
-  "OBJ",
-  "3ds Max (.max)",
-  "3ds Max + Corona",
-  "3ds Max + V-Ray",
-  "Blender (.blend)",
+const highFormats: Array<[string, string]> = [
+  ["FBX", "184 MB"],
+  ["OBJ", "212 MB"],
+  ["3ds Max (.max)", "236 MB"],
+  ["3ds Max + Corona", "248 MB"],
+  ["3ds Max + V-Ray", "251 MB"],
+  ["Blender (.blend)", "198 MB"],
 ];
 
-const midFormats = ["Unreal FBX (UE5-ready)", "Unity FBX (verified import)", "GLB / glTF", "OBJ"];
+const midFormats: Array<[string, string]> = [
+  ["Unreal FBX (UE5-ready)", "38 MB"],
+  ["Unity FBX (verified import)", "38 MB"],
+  ["GLB / glTF", "24 MB"],
+  ["OBJ", "31 MB"],
+];
 
 function ProductPage() {
   const { product } = Route.useLoaderData();
