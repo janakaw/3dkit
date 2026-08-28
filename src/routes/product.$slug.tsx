@@ -3,6 +3,8 @@ import { useState } from "react";
 import {
   Box,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Facebook,
   FileText,
