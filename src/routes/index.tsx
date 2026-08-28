@@ -1,6 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Building2, Gamepad2 } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
 import {
@@ -10,7 +9,6 @@ import {
   products,
   setSubcategories,
   styles,
-  type PolyTier,
 } from "@/lib/products";
 
 type IndexSearch = {
@@ -49,7 +47,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { category, sub, style } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
-  const [tier, setTier] = useState<PolyTier>("high");
 
   const setSearch = (next: IndexSearch) => navigate({ search: next });
 
@@ -88,51 +85,21 @@ function Index() {
             <p className="mt-4 max-w-md text-sm text-primary-foreground/85 md:text-base">
               2,000+ curated sets. One subscription. High-poly and game-ready in every set.
             </p>
-            <a
-              href="#collection"
-              className="mt-7 inline-flex w-fit items-center rounded-full border border-primary-foreground/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
-            >
-              Explore the collection
-            </a>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <a
+                href="#collection"
+                className="inline-flex w-fit items-center rounded-full border border-primary-foreground/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
+              >
+                Explore the collection
+              </a>
+              <Link
+                to="/midpoly"
+                className="inline-flex w-fit items-center rounded-full bg-primary px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Mid-poly for game →
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* Poly tier tabs — directly under the banner */}
-      <section className="mx-auto max-w-[1400px] px-5 pt-10">
-        <p className="text-sm text-muted-foreground">What are you looking for?</p>
-        <div className="mt-3 grid max-w-xl grid-cols-2 gap-3">
-          {(
-            [
-              {
-                id: "high" as const,
-                icon: Building2,
-                title: "High-poly",
-                sub: "Archviz render (Corona / V-Ray)",
-              },
-              {
-                id: "mid" as const,
-                icon: Gamepad2,
-                title: "Mid-poly",
-                sub: "Game engine (Unreal / Unity)",
-              },
-            ]
-          ).map(({ id, icon: Icon, title, sub: s }) => (
-            <button
-              key={id}
-              onClick={() => setTier(id)}
-              aria-pressed={tier === id}
-              className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-4 transition-colors ${
-                tier === id
-                  ? "border-foreground bg-primary text-primary-foreground"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-5 w-5" aria-hidden />
-              <span className="text-sm font-semibold">{title}</span>
-              <span className="text-[11px] opacity-80">{s}</span>
-            </button>
-          ))}
         </div>
       </section>
 
@@ -141,7 +108,7 @@ function Index() {
         <h2 className="text-2xl font-bold text-foreground">New Releases</h2>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
           {newReleases.slice(0, 4).map((p) => (
-            <ProductCard key={p.slug} product={p} tier={tier} />
+            <ProductCard key={p.slug} product={p} />
           ))}
         </div>
       </section>
@@ -242,7 +209,7 @@ function Index() {
 
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((p) => (
-            <ProductCard key={p.slug} product={p} tier={tier} />
+            <ProductCard key={p.slug} product={p} />
           ))}
         </div>
         {filtered.length === 0 && (
