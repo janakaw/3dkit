@@ -42,7 +42,7 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
         onClick={onClose}
         className="fixed inset-0 bg-foreground/60 backdrop-blur-sm"
       />
-      <div className="relative my-auto max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-card p-7 shadow-2xl md:p-10">
+      <div className="relative my-auto max-h-[88vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-border bg-card p-7 shadow-2xl md:p-10">
         <button
           onClick={onClose}
           aria-label="Close"
