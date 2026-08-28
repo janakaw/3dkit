@@ -1,16 +1,44 @@
-import { Link } from "@tanstack/react-router";
-import { ChevronDown, Facebook, Instagram, Music2, Search, ShoppingCart, Youtube } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ChevronDown, Facebook, Instagram, LogOut, Music2, Search, ShoppingCart, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
+    let active = true;
     const open = () => setShowSubscribe(true);
     window.addEventListener(SUBSCRIBE_EVENT, open);
-    return () => window.removeEventListener(SUBSCRIBE_EVENT, open);
+
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (active) setUserName(data.user?.user_metadata?.display_name ?? data.user?.email?.split("@")[0] ?? null);
+    };
+    void loadUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setUserName(session?.user.user_metadata?.display_name ?? session?.user.email?.split("@")[0] ?? null);
+    });
+
+    return () => {
+      active = false;
+      window.removeEventListener(SUBSCRIBE_EVENT, open);
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUserName(null);
+    await navigate({ to: "/signin", replace: true });
+  };
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-[1400px] items-center gap-6 px-5">
@@ -27,7 +55,8 @@ export function SiteHeader() {
                 <Link
                   to="/category/$category"
                   params={{ category: "set" }}
-                  className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
                   Set
                   <ChevronDown className="h-3.5 w-3.5" aria-hidden />
                 </Link>
@@ -82,13 +111,31 @@ export function SiteHeader() {
               3
             </span>
           </Link>
-          <Link
-            to="/signin"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            Sign In
-          </Link>
+          {userName ? (
+            <>
+              <Link to="/my-models" className="hidden text-sm font-semibold text-brand transition-colors hover:text-foreground sm:block">
+                My Models
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                aria-label="Sign out"
+                title={`Sign out ${userName}`}
+                className="hidden text-muted-foreground transition-colors hover:text-brand sm:block"
+              >
+                <LogOut className="h-5 w-5" aria-hidden />
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/signin"
+              className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+            >
+              Sign In
+            </Link>
+          )}
           <button
+            type="button"
             onClick={() => setShowSubscribe(true)}
             className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90"
           >
@@ -115,6 +162,7 @@ export function SiteFooter() {
           {socials.map(({ icon: Icon, label }) => (
             <button
               key={label}
+              type="button"
               aria-label={label}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
             >
@@ -123,28 +171,15 @@ export function SiteFooter() {
           ))}
         </div>
         <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-base font-medium text-muted-foreground">
-          <Link to="/about" className="transition-colors hover:text-foreground">
-            About
-          </Link>
-          <Link to="/terms" className="transition-colors hover:text-foreground">
-            Terms
-          </Link>
-          <Link to="/license" className="transition-colors hover:text-foreground">
-            Standard License
-          </Link>
-          <Link to="/support" className="transition-colors hover:text-foreground">
-            Support
-          </Link>
-          <Link to="/contact" className="transition-colors hover:text-foreground">
-            Contact
-          </Link>
-          <Link to="/free" className="transition-colors hover:text-foreground">
-            Free models
-          </Link>
+          <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
+          <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>
+          <Link to="/license" className="transition-colors hover:text-foreground">Standard License</Link>
+          <Link to="/support" className="transition-colors hover:text-foreground">Support</Link>
+          <Link to="/contact" className="transition-colors hover:text-foreground">Contact</Link>
+          <Link to="/free" className="transition-colors hover:text-foreground">Free models</Link>
         </nav>
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} 3Dkit — original furniture models by our studio, licensed
-          for archviz, interior design and game development.
+          © {new Date().getFullYear()} 3Dkit — original furniture models by our studio, licensed for archviz, interior design and game development.
         </p>
       </div>
     </footer>
