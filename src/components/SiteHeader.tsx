@@ -8,11 +8,14 @@ export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-6 px-5">
-        <Link to="/" className="font-display text-2xl font-extrabold tracking-tight text-foreground">
+      <div className="mx-auto flex h-[72px] max-w-[1400px] items-center gap-6 px-5">
+        <Link
+          to="/"
+          className="font-display text-3xl font-extrabold tracking-tight text-foreground md:text-4xl"
+        >
           3Dkit
         </Link>
-        <nav className="hidden items-center gap-5 lg:flex">
+        <nav className="hidden items-center gap-4 md:flex xl:gap-5">
           {categories.filter((c) => c !== "Side Table").map((c) =>
             c === "Set" ? (
               <div key={c} className="group relative">
