@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
+import { openSubscribe } from "@/components/SubscribeModal";
 import {
   formatPrice,
   getProduct,
@@ -113,7 +114,7 @@ function ProductPage() {
           <span className="text-foreground">{product.name}</span>
         </nav>
 
-        <div className="mt-5 grid gap-12 lg:grid-cols-[1.6fr_1fr]">
+        <div className="mt-5 grid gap-12 lg:grid-cols-[2fr_1fr]">
           {/* Left — visuals + description */}
           <div>
             <div className="group relative overflow-hidden rounded-2xl bg-secondary">
@@ -224,14 +225,20 @@ function ProductPage() {
               )}
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-4 border-y border-border py-4">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-brand-soft px-5 py-5">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                <p className="text-sm font-semibold uppercase tracking-wide text-brand">
                   Unlimited subscription
                 </p>
-                <p className="text-sm font-semibold text-foreground">from $19/mo · cancel anytime</p>
+                <p className="mt-1 text-lg font-semibold text-foreground">
+                  $19<span className="text-base font-medium text-muted-foreground">/mo</span> ·
+                  cancel anytime
+                </p>
               </div>
-              <button className="rounded-full border border-brand px-5 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-brand-foreground">
+              <button
+                onClick={openSubscribe}
+                className="rounded-full bg-brand px-8 py-3.5 text-base font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
+              >
                 Subscribe
               </button>
             </div>

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
+import { openSubscribe } from "@/components/SubscribeModal";
 import {
   categories,
   heroImage,
@@ -84,7 +85,8 @@ function Index() {
               Premium 3D furniture sets, ready for render or engine.
             </h1>
             <p className="mt-4 max-w-md text-sm text-primary-foreground/85 md:text-base">
-              2,000+ curated sets. One subscription. High-poly and game-ready in every set.
+              Original models designed in-house for archviz, interior designers, architects and
+              game developers. One subscription from $19/mo — cancel anytime.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <a
@@ -99,6 +101,12 @@ function Index() {
               >
                 Mid-poly for game →
               </Link>
+              <button
+                onClick={openSubscribe}
+                className="inline-flex w-fit items-center rounded-full bg-primary-foreground px-7 py-3 text-sm font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90"
+              >
+                Subscribe for unlimited access
+              </button>
             </div>
           </div>
         </div>
