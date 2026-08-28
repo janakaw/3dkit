@@ -16,6 +16,7 @@ export type Product = {
   slug: string;
   name: string;
   category: string;
+  style: string;
   price: number;
   image: string;
   polys: string;
