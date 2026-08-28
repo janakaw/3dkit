@@ -16,6 +16,7 @@ import { Route as FreeRouteImport } from './routes/free'
 import { Route as MidpolyRouteImport } from './routes/midpoly'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
@@ -55,6 +56,11 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   id: '/category/$category',
   path: '/category/$category',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/terms'
     | '/category/$category'
     | '/product/$slug'
     | '/subscribe/$plan'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/terms'
     | '/category/$category'
     | '/product/$slug'
     | '/subscribe/$plan'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/terms'
     | '/category/$category'
     | '/product/$slug'
     | '/subscribe/$plan'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   MidpolyRoute: typeof MidpolyRoute
   SearchRoute: typeof SearchRoute
   SigninRoute: typeof SigninRoute
+  TermsRoute: typeof TermsRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SubscribePlanRoute: typeof SubscribePlanRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$category': {
       id: '/category/$category'
       path: '/category/$category'
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   MidpolyRoute: MidpolyRoute,
   SearchRoute: SearchRoute,
   SigninRoute: SigninRoute,
+  TermsRoute: TermsRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
   ProductSlugRoute: ProductSlugRoute,
   SubscribePlanRoute: SubscribePlanRoute,
