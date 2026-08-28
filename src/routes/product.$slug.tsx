@@ -187,9 +187,6 @@ function ProductPage() {
 
             <p className="mt-6 font-display text-3xl font-extrabold text-foreground">
               {formatPrice(variant.price)}
-              <span className="ml-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                USD
-              </span>
             </p>
 
             <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90">
