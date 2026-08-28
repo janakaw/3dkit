@@ -107,7 +107,9 @@ function SubscribePage() {
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                 <CreditCard className="h-5 w-5 text-muted-foreground" aria-hidden />
                 <input
+                  name="cardNumber"
                   inputMode="numeric"
+                  required
                   placeholder="4242 4242 4242 4242"
                   className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                 />
