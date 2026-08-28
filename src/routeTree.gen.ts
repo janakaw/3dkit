@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FreeRouteImport } from './routes/free'
 import { Route as LicenseRouteImport } from './routes/license'
 import { Route as MidpolyRouteImport } from './routes/midpoly'
@@ -36,6 +37,11 @@ const AboutRoute = AboutRouteImport.update({
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FreeRoute = FreeRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
     | '/license'
     | '/midpoly'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
     | '/license'
     | '/midpoly'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
     | '/license'
     | '/midpoly'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
+  ContactRoute: typeof ContactRoute
   FreeRoute: typeof FreeRoute
   LicenseRoute: typeof LicenseRoute
   MidpolyRoute: typeof MidpolyRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/free': {
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
+  ContactRoute: ContactRoute,
   FreeRoute: FreeRoute,
   LicenseRoute: LicenseRoute,
   MidpolyRoute: MidpolyRoute,
