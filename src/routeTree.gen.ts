@@ -21,6 +21,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
+import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
 
@@ -84,6 +85,11 @@ const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   path: '/category/$category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
+  id: '/payment/success',
+  path: '/payment/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/category/$category'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   fileRoutesByTo: FileRoutesByTo
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/category/$category'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   id:
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/category/$category'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
+  PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SubscribePlanRoute: typeof SubscribePlanRoute
 }
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoryCategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/payment/success': {
+      id: '/payment/success'
+      path: '/payment/success'
+      fullPath: '/payment/success'
+      preLoaderRoute: typeof PaymentSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
+  PaymentSuccessRoute: PaymentSuccessRoute,
   ProductSlugRoute: ProductSlugRoute,
   SubscribePlanRoute: SubscribePlanRoute,
 }
