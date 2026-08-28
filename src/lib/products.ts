@@ -400,16 +400,12 @@ export const setSubcategories = ["Living Set", "Dining Set", "Patio Set"] as con
 
 export const styles = ["Mid-century", "Modern", "Scandinavian", "Minimal", "Outdoor"] as const;
 
-export const types = [
-  "Lounge Chair",
-  "3-Seater",
-  "L-Shape",
-  "Round",
-  "Rectangular",
-  "Console",
-  "Cube",
-  "Full Set",
-] as const;
+export const types = ["2-Seater", "3-Seater", "L-Shape"] as const;
+
+/** Type filters are only defined for Sofa for now; more categories come later. */
+export const typesByCategory: Record<string, readonly string[]> = {
+  Sofa: ["2-Seater", "3-Seater", "L-Shape"],
+};
 
 const typeBySlug: Record<string, string> = {
   "eames-lounge-chair": "Lounge Chair",
