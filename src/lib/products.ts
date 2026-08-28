@@ -1,4 +1,4 @@
-import hero from "@/assets/hero-lux.jpg.asset.json";
+import hero from "@/assets/hero-suite.jpg.asset.json";
 import p1 from "@/assets/p1.jpg.asset.json";
 import p2 from "@/assets/p2.jpg.asset.json";
 import p3 from "@/assets/p3.jpg.asset.json";
@@ -311,6 +311,25 @@ const blueprints: Blueprint[] = [
   { name: "Rivo Leather Club Chair", category: "Armchair", style: "Mid-century", price: 17, polys: 71000 },
   { name: "Halden Accent Chair", category: "Armchair", style: "Minimal", price: 11, polys: 46000 },
   { name: "Terrace Rattan Armchair", category: "Armchair", style: "Outdoor", price: 12, polys: 49000 },
+  { name: "Corso Swivel Armchair", category: "Armchair", style: "Modern", price: 16, polys: 66000 },
+  { name: "Aveline Bouclé Lounge Chair", category: "Armchair", style: "Scandinavian", price: 14, polys: 58000 },
+  { name: "Otto Shell Armchair", category: "Armchair", style: "Mid-century", price: 15, polys: 61000 },
+  { name: "Piano Low Armchair", category: "Armchair", style: "Minimal", price: 12, polys: 44000 },
+  { name: "Sable Leather Armchair", category: "Armchair", style: "Mid-century", price: 18, polys: 74000 },
+  { name: "Lume Reading Chair", category: "Armchair", style: "Scandinavian", price: 13, polys: 51000 },
+  { name: "Vero Cocoon Armchair", category: "Armchair", style: "Modern", price: 17, polys: 69000 },
+  { name: "Bay Teak Lounge Chair", category: "Armchair", style: "Outdoor", price: 13, polys: 52000 },
+  { name: "Nova Tub Chair", category: "Armchair", style: "Minimal", price: 11, polys: 42000 },
+  { name: "Ellis Slipper Chair", category: "Armchair", style: "Mid-century", price: 12, polys: 47000 },
+  { name: "Arlo Steel Frame Armchair", category: "Armchair", style: "Modern", price: 14, polys: 56000 },
+  { name: "Fjord Wool Armchair", category: "Armchair", style: "Scandinavian", price: 0, polys: 39000 },
+  { name: "Solis Cane Armchair", category: "Armchair", style: "Outdoor", price: 12, polys: 48000 },
+  { name: "Mira Sculpted Armchair", category: "Armchair", style: "Minimal", price: 15, polys: 60000 },
+  { name: "Roux Velvet Wing Chair", category: "Armchair", style: "Modern", price: 16, polys: 64000 },
+  { name: "Kioto Oak Armchair", category: "Armchair", style: "Minimal", price: 13, polys: 50000 },
+  { name: "Adell Curved Armchair", category: "Armchair", style: "Modern", price: 17, polys: 68000 },
+  { name: "Brant Lounge Chair", category: "Armchair", style: "Mid-century", price: 16, polys: 63000 },
+  { name: "Hana Rope Armchair", category: "Armchair", style: "Outdoor", price: 13, polys: 53000 },
   { name: "Bexley L-Shape Sofa", category: "Sofa", style: "Modern", price: 29, polys: 138000 },
   { name: "Aster 2-Seater Sofa", category: "Sofa", style: "Scandinavian", price: 21, polys: 96000 },
   { name: "Vella Curved Sofa", category: "Sofa", style: "Modern", price: 32, polys: 152000 },
