@@ -198,16 +198,16 @@ function ProductPage() {
               </button>
               {openDownload && (
                 <ul className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                  {formats.map((f) => (
+                  {formats.map(([f, size]) => (
                     <li key={f}>
-                      <button className="block w-full border-b border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors last:border-0 hover:bg-secondary hover:text-foreground">
-                        {f}
+                      <button className="flex w-full items-center justify-between border-b border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors last:border-0 hover:bg-secondary hover:text-foreground">
+                        <span>{f}</span>
+                        <span className="text-xs text-muted-foreground/70">{size}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="mt-2 text-[11px] text-muted-foreground">{variant.note}</p>
             </div>
 
             {/* Tech specs */}
@@ -225,23 +225,6 @@ function ProductPage() {
                 ))}
               </dl>
             </div>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              {tier === "mid" ? (
-                <Link to="/product/$slug" params={{ slug: product.slug }} className="underline">
-                  View the high-poly archviz version
-                </Link>
-              ) : (
-                <Link
-                  to="/product/$slug"
-                  params={{ slug: product.slug }}
-                  search={{ tier: "mid" }}
-                  className="underline"
-                >
-                  Need it game-ready? View the mid-poly version
-                </Link>
-              )}
-            </p>
           </aside>
         </div>
 
