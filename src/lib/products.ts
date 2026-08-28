@@ -433,4 +433,4 @@ export const formatPrice = (n: number) => (n === 0 ? "FREE" : `$${n.toFixed(2)} 
 export const categorySlug = (c: string) => c.toLowerCase().replace(/\s+/g, "-");
 export const categoryFromSlug = (slug: string) =>
   categories.find((c) => categorySlug(c) === slug.toLowerCase());
-export const PAGE_SIZE = 16;
+export const PAGE_SIZE = 12;

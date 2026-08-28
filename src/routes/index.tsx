@@ -82,9 +82,10 @@ function Index() {
             alt="Custom-designed 3D living room set with modular sofa, marble coffee table and lounge chair"
             width={1920}
             height={912}
-            className="h-[420px] w-full object-cover md:h-[520px]"
+            className="h-[480px] w-full object-cover md:h-[600px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/75 via-foreground/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.30_0.003_260/0.72)] via-[oklch(0.35_0.003_260/0.38)] to-transparent" />
+
           <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-14">
             <p className="text-xs uppercase tracking-[0.2em] text-primary-foreground/75">
               For architects, designers and game creators
