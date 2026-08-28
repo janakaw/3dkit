@@ -81,6 +81,12 @@ function SubscribePage() {
             className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
+              const cardNumber = new FormData(e.currentTarget).get("cardNumber");
+              const isDeclined = typeof cardNumber === "string" && cardNumber.replace(/\s/g, "") === "4000000000000002";
+              navigate({
+                to: isDeclined ? "/payment/failed" : "/payment/success",
+                search: isDeclined ? { plan: plan.name === "Studio Plan" ? "studio" : "freelancer" } : { plan: plan.name === "Studio Plan" ? "studio" : "freelancer", amount: plan.price + tax },
+              });
             }}
           >
             <div>
