@@ -1,4 +1,4 @@
-import hero from "@/assets/hero.jpg.asset.json";
+import hero from "@/assets/hero-living.jpg.asset.json";
 import p1 from "@/assets/p1.jpg.asset.json";
 import p2 from "@/assets/p2.jpg.asset.json";
 import p3 from "@/assets/p3.jpg.asset.json";
