@@ -92,3 +92,9 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
     document.body,
   );
 }
+
+export const SUBSCRIBE_EVENT = "3dkit:open-subscribe";
+
+export function openSubscribe() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SUBSCRIBE_EVENT));
+}
