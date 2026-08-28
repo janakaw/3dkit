@@ -13,7 +13,7 @@ export function SiteHeader() {
           3Dkit
         </Link>
         <nav className="hidden items-center gap-5 lg:flex">
-          {categories.map((c) =>
+          {categories.filter((c) => c !== "Side Table").map((c) =>
             c === "Set" ? (
               <div key={c} className="group relative">
                 <button className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -44,6 +44,12 @@ export function SiteHeader() {
               </Link>
             ),
           )}
+          <Link
+            to="/midpoly"
+            className="rounded-full border border-primary px-3 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            Mid-Poly Furniture
+          </Link>
           <Link
             to="/free"
             className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-accent"

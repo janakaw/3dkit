@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as FreeRouteImport } from './routes/free'
+import { Route as MidpolyRouteImport } from './routes/midpoly'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const FreeRoute = FreeRouteImport.update({
   path: '/free',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MidpolyRoute = MidpolyRouteImport.update({
+  id: '/midpoly',
+  path: '/midpoly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/free': typeof FreeRoute
+  '/midpoly': typeof MidpolyRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/free': typeof FreeRoute
+  '/midpoly': typeof MidpolyRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/free': typeof FreeRoute
+  '/midpoly': typeof MidpolyRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/free' | '/product/$slug'
+  fullPaths: '/' | '/about' | '/free' | '/midpoly' | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/free' | '/product/$slug'
-  id: '__root__' | '/' | '/about' | '/free' | '/product/$slug'
+  to: '/' | '/about' | '/free' | '/midpoly' | '/product/$slug'
+  id: '__root__' | '/' | '/about' | '/free' | '/midpoly' | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   FreeRoute: typeof FreeRoute
+  MidpolyRoute: typeof MidpolyRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/midpoly': {
+      id: '/midpoly'
+      path: '/midpoly'
+      fullPath: '/midpoly'
+      preLoaderRoute: typeof MidpolyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   FreeRoute: FreeRoute,
+  MidpolyRoute: MidpolyRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport

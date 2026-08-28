@@ -307,6 +307,32 @@ export const setSubcategories = ["Living Set", "Dining Set", "Patio Set"] as con
 
 export const styles = ["Mid-century", "Modern", "Scandinavian", "Minimal", "Outdoor"] as const;
 
+export const types = [
+  "Lounge Chair",
+  "3-Seater",
+  "L-Shape",
+  "Round",
+  "Rectangular",
+  "Console",
+  "Cube",
+  "Full Set",
+] as const;
+
+const typeBySlug: Record<string, string> = {
+  "eames-lounge-chair": "Lounge Chair",
+  "sloan-3-seater-sofa": "3-Seater",
+  "noguchi-table": "Round",
+  "oak-media-console": "Console",
+  "olive-velvet-armchair": "Lounge Chair",
+  "cube-ottoman": "Cube",
+  "yves-complete-living-room-set": "L-Shape",
+  "marble-tripod-side-table": "Round",
+  "harlow-dining-set": "Rectangular",
+  "azure-patio-set": "Full Set",
+};
+
+export const getType = (slug: string) => typeBySlug[slug] ?? "Full Set";
+
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
 export const newReleases = products.filter((p) => p.isNew);
 export const formatPrice = (n: number) => (n === 0 ? "FREE" : `$${n.toFixed(2)} USD`);
