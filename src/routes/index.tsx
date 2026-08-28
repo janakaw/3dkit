@@ -111,17 +111,26 @@ function Index() {
               </Link>
               <button
                 onClick={openSubscribe}
-                className="absolute right-[-1.5rem] top-1/2 hidden -translate-y-1/2 rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 md:right-[-3.5rem] lg:block"
+                className="group absolute right-[-1.5rem] top-1/2 hidden -translate-y-1/2 overflow-hidden rounded-l-2xl bg-brand py-4 pl-8 pr-6 text-left text-brand-foreground shadow-[0_10px_40px_-8px_hsl(var(--brand)/0.7)] ring-1 ring-primary-foreground/20 transition-transform hover:scale-[1.03] md:right-[-3.5rem] lg:block"
               >
-                Subscribe for unlimited access
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                <span className="relative block text-[0.65rem] font-bold uppercase tracking-[0.2em] opacity-90">
+                  Unlimited access
+                </span>
+                <span className="relative mt-1 block font-display text-base font-extrabold uppercase tracking-tight">
+                  Subscribe from $19/mo →
+                </span>
+                <span className="relative mt-0.5 block text-[0.65rem] uppercase tracking-wide opacity-85">
+                  Cancel anytime
+                </span>
               </button>
             </div>
           </div>
           <button
             onClick={openSubscribe}
-            className="absolute bottom-4 left-6 rounded-full bg-primary-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90 lg:hidden"
+            className="absolute bottom-4 left-6 rounded-full bg-brand px-6 py-3 text-xs font-bold uppercase tracking-wide text-brand-foreground shadow-lg transition-transform hover:scale-105 lg:hidden"
           >
-            Subscribe for unlimited access
+            Subscribe $19/mo — unlimited access
           </button>
         </div>
       </section>
