@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const plans = [
   {
@@ -26,8 +27,8 @@ const plans = [
 ];
 
 export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null;
-  return (
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4"
       role="dialog"
@@ -87,6 +88,7 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
