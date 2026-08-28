@@ -59,21 +59,23 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
           file you have already downloaded.
         </p>
 
-        <div className="mt-7 grid gap-5 md:grid-cols-2">
+        <div className="mt-7 space-y-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className="flex flex-col rounded-xl border border-border bg-secondary p-6"
+              className="flex flex-col gap-6 rounded-xl border border-border bg-secondary p-6 md:flex-row md:items-center"
             >
-              <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
-                {plan.name}
-              </p>
-              <p className="mt-2 font-display text-3xl font-extrabold text-foreground">
-                ${plan.price}
-                <span className="text-base font-medium text-muted-foreground"> / month</span>
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{plan.target}</p>
-              <ul className="mt-4 space-y-2">
+              <div className="md:w-56 md:shrink-0">
+                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
+                  {plan.name}
+                </p>
+                <p className="mt-2 font-display text-3xl font-extrabold text-foreground">
+                  ${plan.price}
+                  <span className="text-base font-medium text-muted-foreground"> / month</span>
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{plan.target}</p>
+              </div>
+              <ul className="flex-1 space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
@@ -81,17 +83,19 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
                   </li>
                 ))}
               </ul>
-              <Link
-                to="/subscribe/$plan"
-                params={{ plan: plan.slug }}
-                onClick={onClose}
-                className="mt-6 block rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
-              >
-                Subscribe
-              </Link>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Billed monthly · cancel any time in 2 clicks
-              </p>
+              <div className="md:w-48 md:shrink-0">
+                <Link
+                  to="/subscribe/$plan"
+                  params={{ plan: plan.slug }}
+                  onClick={onClose}
+                  className="block rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
+                >
+                  Subscribe
+                </Link>
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  Billed monthly · cancel any time
+                </p>
+              </div>
             </div>
           ))}
         </div>
