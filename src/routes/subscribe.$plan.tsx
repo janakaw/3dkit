@@ -1,4 +1,5 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Check, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/subscribe/$plan")({
 
 function SubscribePage() {
   const { plan } = Route.useLoaderData();
+  const navigate = useNavigate({ from: "/subscribe/$plan" });
   const tax = Math.round(plan.price * 0.1 * 100) / 100;
 
   return (
@@ -79,6 +81,12 @@ function SubscribePage() {
             className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
+              const cardNumber = new FormData(e.currentTarget).get("cardNumber");
+              const isDeclined = typeof cardNumber === "string" && cardNumber.replace(/\s/g, "") === "4000000000000002";
+              navigate({
+                to: isDeclined ? "/payment/failed" : "/payment/success",
+                search: isDeclined ? { plan: plan.name === "Studio Plan" ? "studio" : "freelancer" } : { plan: plan.name === "Studio Plan" ? "studio" : "freelancer", amount: plan.price + tax },
+              });
             }}
           >
             <div>
@@ -99,7 +107,9 @@ function SubscribePage() {
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                 <CreditCard className="h-5 w-5 text-muted-foreground" aria-hidden />
                 <input
+                  name="cardNumber"
                   inputMode="numeric"
+                  required
                   placeholder="4242 4242 4242 4242"
                   className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                 />

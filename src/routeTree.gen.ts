@@ -12,11 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FreeRouteImport } from './routes/free'
+import { Route as LicenseRouteImport } from './routes/license'
 import { Route as MidpolyRouteImport } from './routes/midpoly'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
+import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
+import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
 
@@ -35,9 +41,19 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FreeRoute = FreeRouteImport.update({
   id: '/free',
   path: '/free',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicenseRoute = LicenseRouteImport.update({
+  id: '/license',
+  path: '/license',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MidpolyRoute = MidpolyRouteImport.update({
@@ -55,9 +71,29 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   id: '/category/$category',
   path: '/category/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentFailedRoute = PaymentFailedRouteImport.update({
+  id: '/payment/failed',
+  path: '/payment/failed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
+  id: '/payment/success',
+  path: '/payment/success',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
@@ -75,11 +111,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/failed': typeof PaymentFailedRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -87,11 +129,17 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/failed': typeof PaymentFailedRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -100,11 +148,17 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/payment/failed': typeof PaymentFailedRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
 }
@@ -114,11 +168,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/support'
+    | '/terms'
     | '/category/$category'
+    | '/payment/failed'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   fileRoutesByTo: FileRoutesByTo
@@ -126,11 +186,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/support'
+    | '/terms'
     | '/category/$category'
+    | '/payment/failed'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   id:
@@ -138,11 +204,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/contact'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
+    | '/support'
+    | '/terms'
     | '/category/$category'
+    | '/payment/failed'
+    | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
   fileRoutesById: FileRoutesById
@@ -151,11 +223,17 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
+  ContactRoute: typeof ContactRoute
   FreeRoute: typeof FreeRoute
+  LicenseRoute: typeof LicenseRoute
   MidpolyRoute: typeof MidpolyRoute
   SearchRoute: typeof SearchRoute
   SigninRoute: typeof SigninRoute
+  SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
+  PaymentFailedRoute: typeof PaymentFailedRoute
+  PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SubscribePlanRoute: typeof SubscribePlanRoute
 }
@@ -183,11 +261,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/free': {
       id: '/free'
       path: '/free'
       fullPath: '/free'
       preLoaderRoute: typeof FreeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/license': {
+      id: '/license'
+      path: '/license'
+      fullPath: '/license'
+      preLoaderRoute: typeof LicenseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/midpoly': {
@@ -211,11 +303,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$category': {
       id: '/category/$category'
       path: '/category/$category'
       fullPath: '/category/$category'
       preLoaderRoute: typeof CategoryCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment/failed': {
+      id: '/payment/failed'
+      path: '/payment/failed'
+      fullPath: '/payment/failed'
+      preLoaderRoute: typeof PaymentFailedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment/success': {
+      id: '/payment/success'
+      path: '/payment/success'
+      fullPath: '/payment/success'
+      preLoaderRoute: typeof PaymentSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$slug': {
@@ -239,11 +359,17 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
+  ContactRoute: ContactRoute,
   FreeRoute: FreeRoute,
+  LicenseRoute: LicenseRoute,
   MidpolyRoute: MidpolyRoute,
   SearchRoute: SearchRoute,
   SigninRoute: SigninRoute,
+  SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
+  PaymentFailedRoute: PaymentFailedRoute,
+  PaymentSuccessRoute: PaymentSuccessRoute,
   ProductSlugRoute: ProductSlugRoute,
   SubscribePlanRoute: SubscribePlanRoute,
 }
