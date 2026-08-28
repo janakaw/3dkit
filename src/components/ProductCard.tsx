@@ -8,6 +8,7 @@ export function ProductCard({ product, tier = "high" }: { product: Product; tier
     <Link
       to="/product/$slug"
       params={{ slug: product.slug }}
+      search={tier === "mid" ? { tier: "mid" as const } : {}}
       className="group block overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-[0_14px_40px_-18px_oklch(0.2_0.02_80/0.45)]"
     >
       <div className="relative aspect-square overflow-hidden bg-secondary">
