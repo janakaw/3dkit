@@ -11,7 +11,7 @@ export function LegalPage({
   title: string;
   intro: string;
   sections?: Section[];
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <main className="mx-auto max-w-3xl px-5 py-14">
