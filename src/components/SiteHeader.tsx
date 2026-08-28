@@ -29,6 +29,7 @@ export function SiteHeader() {
                       key={s}
                       to="/"
                       search={{ category: "Set", sub: s }}
+                      hash="collection"
                       className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       {s}
@@ -41,6 +42,7 @@ export function SiteHeader() {
                 key={c}
                 to="/"
                 search={{ category: c }}
+                hash="collection"
                 className="py-5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {c}
