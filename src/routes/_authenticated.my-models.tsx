@@ -58,7 +58,7 @@ function MyModelsPage() {
       } else {
         setUserName(
           profileResult.data?.display_name ??
-            authData.user.user_metadata?.display_name ??
+            authData.user.user_metadata?.["display_name"] ??
             authData.user.email?.split("@")[0] ??
             "Your library",
         );

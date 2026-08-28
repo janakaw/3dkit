@@ -17,13 +17,13 @@ export function SiteHeader() {
 
     const loadUser = async () => {
       const { data } = await supabase.auth.getUser();
-      if (active) setUserName(data.user?.user_metadata?.display_name ?? data.user?.email?.split("@")[0] ?? null);
+      if (active) setUserName(data.user?.user_metadata?.["display_name"] ?? data.user?.email?.split("@")[0] ?? null);
     };
     void loadUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
-      setUserName(session?.user.user_metadata?.display_name ?? session?.user.email?.split("@")[0] ?? null);
+      setUserName(session?.user.user_metadata?.["display_name"] ?? session?.user.email?.split("@")[0] ?? null);
     });
 
     return () => {
