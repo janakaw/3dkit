@@ -126,12 +126,18 @@ export function SiteFooter() {
           <Link to="/about" className="transition-colors hover:text-foreground">
             About
           </Link>
-          <span className="cursor-pointer transition-colors hover:text-foreground">Terms</span>
-          <span className="cursor-pointer transition-colors hover:text-foreground">
+          <Link to="/terms" className="transition-colors hover:text-foreground">
+            Terms
+          </Link>
+          <Link to="/license" className="transition-colors hover:text-foreground">
             Standard License
-          </span>
-          <span className="cursor-pointer transition-colors hover:text-foreground">Support</span>
-          <span className="cursor-pointer transition-colors hover:text-foreground">Contact</span>
+          </Link>
+          <Link to="/support" className="transition-colors hover:text-foreground">
+            Support
+          </Link>
+          <Link to="/contact" className="transition-colors hover:text-foreground">
+            Contact
+          </Link>
           <Link to="/free" className="transition-colors hover:text-foreground">
             Free models
           </Link>
