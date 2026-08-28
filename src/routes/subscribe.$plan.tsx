@@ -56,6 +56,7 @@ export const Route = createFileRoute("/subscribe/$plan")({
 
 function SubscribePage() {
   const { plan } = Route.useLoaderData();
+  const navigate = useNavigate({ from: "/subscribe/$plan" });
   const tax = Math.round(plan.price * 0.1 * 100) / 100;
 
   return (
