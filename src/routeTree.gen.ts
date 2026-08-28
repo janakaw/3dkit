@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -20,6 +21,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedMyModelsRouteImport } from './routes/_authenticated.my-models'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
 import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
 import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
@@ -29,6 +31,10 @@ import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -81,6 +87,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMyModelsRoute = AuthenticatedMyModelsRouteImport.update({
+  id: '/my-models',
+  path: '/my-models',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   id: '/category/$category',
   path: '/category/$category',
@@ -119,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
@@ -137,6 +149,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
@@ -146,6 +159,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
@@ -156,6 +170,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
@@ -176,6 +191,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/my-models'
     | '/category/$category'
     | '/payment/failed'
     | '/payment/success'
@@ -194,6 +210,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/my-models'
     | '/category/$category'
     | '/payment/failed'
     | '/payment/success'
@@ -202,6 +219,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/about'
     | '/cart'
     | '/contact'
@@ -212,6 +230,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/_authenticated/my-models'
     | '/category/$category'
     | '/payment/failed'
     | '/payment/success'
@@ -221,6 +240,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
   ContactRoute: typeof ContactRoute
@@ -245,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -317,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/my-models': {
+      id: '/_authenticated/my-models'
+      path: '/my-models'
+      fullPath: '/my-models'
+      preLoaderRoute: typeof AuthenticatedMyModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/category/$category': {
       id: '/category/$category'
       path: '/category/$category'
@@ -355,8 +389,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMyModelsRoute: typeof AuthenticatedMyModelsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMyModelsRoute: AuthenticatedMyModelsRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
   ContactRoute: ContactRoute,
