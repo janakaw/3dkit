@@ -4,12 +4,16 @@ import {
   Box,
   ChevronDown,
   Download,
+  Facebook,
   FileText,
   Grid2x2,
+  Instagram,
   LifeBuoy,
+  Music2,
   RefreshCw,
   ShoppingCart,
   Sparkles,
+  Youtube,
 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
@@ -234,6 +238,42 @@ function ProductPage() {
             {related.map((p) => (
               <ProductCard key={p.slug} product={p} tier={tier} />
             ))}
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-border pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <Link to="/about" className="transition-colors hover:text-foreground">
+                About
+              </Link>
+              <span className="cursor-pointer transition-colors hover:text-foreground">Terms</span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Support
+              </span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Contact
+              </span>
+              <span className="cursor-pointer transition-colors hover:text-foreground">
+                Standard License
+              </span>
+            </nav>
+            <div className="flex items-center gap-3">
+              {[
+                { icon: Youtube, label: "YouTube" },
+                { icon: Instagram, label: "Instagram" },
+                { icon: Facebook, label: "Facebook" },
+                { icon: Music2, label: "TikTok" },
+              ].map(({ icon: Icon, label }) => (
+                <button
+                  key={label}
+                  aria-label={label}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                >
+                  <Icon className="h-4 w-4" aria-hidden />
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       </div>
