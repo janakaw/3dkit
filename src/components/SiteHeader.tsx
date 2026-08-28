@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Facebook, Instagram, Music2, Search, ShoppingCart, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
-import { categories, setSubcategories } from "@/lib/products";
+import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
 
 export function SiteHeader() {
@@ -24,17 +24,20 @@ export function SiteHeader() {
           {categories.filter((c) => c !== "Side Table").map((c) =>
             c === "Set" ? (
               <div key={c} className="group relative">
-                <button className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                <Link
+                  to="/category/$category"
+                  params={{ category: "set" }}
+                  className="flex items-center gap-1 py-5 text-sm text-muted-foreground transition-colors hover:text-foreground">
                   Set
                   <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-                </button>
+                </Link>
                 <div className="invisible absolute left-0 top-full w-44 rounded-xl border border-border bg-card p-2 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
                   {setSubcategories.map((s) => (
                     <Link
                       key={s}
-                      to="/"
-                      search={{ category: "Set", sub: s }}
-                      hash="collection"
+                      to="/category/$category"
+                      params={{ category: "set" }}
+                      search={{ sub: s }}
                       className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       {s}
@@ -45,9 +48,8 @@ export function SiteHeader() {
             ) : (
               <Link
                 key={c}
-                to="/"
-                search={{ category: c }}
-                hash="collection"
+                to="/category/$category"
+                params={{ category: categorySlug(c) }}
                 className="py-5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {c}

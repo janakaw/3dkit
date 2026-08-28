@@ -4,7 +4,9 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { openSubscribe } from "@/components/SubscribeModal";
 import {
+  PAGE_SIZE,
   categories,
+  categorySlug,
   heroImage,
   newReleases,
   products,
@@ -16,6 +18,7 @@ type IndexSearch = {
   category?: string | undefined;
   sub?: string | undefined;
   style?: string | undefined;
+  page?: number | undefined;
 };
 
 export const Route = createFileRoute("/")({
@@ -23,6 +26,7 @@ export const Route = createFileRoute("/")({
     category: typeof search["category"] === "string" ? (search["category"] as string) : undefined,
     sub: typeof search["sub"] === "string" ? (search["sub"] as string) : undefined,
     style: typeof search["style"] === "string" ? (search["style"] as string) : undefined,
+    page: Number(search["page"]) > 1 ? Number(search["page"]) : undefined,
   }),
   head: () => ({
     meta: [
@@ -46,7 +50,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { category, sub, style } = Route.useSearch();
+  const { category, sub, style, page = 1 } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
   const setSearch = (next: IndexSearch) =>
@@ -63,6 +67,10 @@ function Index() {
     [category, sub, style],
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const current = Math.min(Math.max(1, page), totalPages);
+  const pageItems = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -71,7 +79,7 @@ function Index() {
         <div className="relative overflow-hidden rounded-2xl">
           <img
             src={heroImage}
-            alt="Photorealistic 3D rendered modern living room interior"
+            alt="Custom-designed 3D living room set with modular sofa, marble coffee table and lounge chair"
             width={1920}
             height={912}
             className="h-[420px] w-full object-cover md:h-[520px]"
@@ -85,8 +93,8 @@ function Index() {
               Premium 3D furniture sets, ready for render or engine.
             </h1>
             <p className="mt-4 max-w-md text-sm text-primary-foreground/85 md:text-base">
-              Original models designed in-house for archviz, interior designers, architects and
-              game developers. One subscription from $19/mo — cancel anytime.
+              Access custom-tailored asset sets — available by subscription or individual model
+              sale — for archviz, interior designers, architects and game creators.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <a
@@ -101,14 +109,20 @@ function Index() {
               >
                 Mid-poly for game →
               </Link>
-              <button
-                onClick={openSubscribe}
-                className="inline-flex w-fit items-center rounded-full bg-primary-foreground px-7 py-3 text-sm font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90"
-              >
-                Subscribe for unlimited access
-              </button>
             </div>
           </div>
+          <button
+            onClick={openSubscribe}
+            className="absolute right-0 top-1/2 hidden -translate-y-1/2 rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 lg:block"
+          >
+            Subscribe for unlimited access
+          </button>
+          <button
+            onClick={openSubscribe}
+            className="absolute bottom-4 left-6 rounded-full bg-primary-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90 lg:hidden"
+          >
+            Subscribe for unlimited access
+          </button>
         </div>
       </section>
 
@@ -217,10 +231,38 @@ function Index() {
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((p) => (
+          {pageItems.map((p) => (
             <ProductCard key={p.slug} product={p} />
           ))}
         </div>
+        {totalPages > 1 && (
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                onClick={() => setSearch({ category, sub, style, page: n })}
+                className={`h-9 w-9 rounded-full border text-sm transition-colors ${
+                  n === current
+                    ? "border-brand bg-brand text-brand-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
+        {category && (
+          <div className="mt-8 text-center">
+            <Link
+              to="/category/$category"
+              params={{ category: categorySlug(category) }}
+              className="inline-flex rounded-full border border-brand px-6 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
+            >
+              Open the full {category} page →
+            </Link>
+          </div>
+        )}
         {filtered.length === 0 && (
           <p className="mt-8 text-sm text-muted-foreground">
             No models match these filters yet — more are on the way.
