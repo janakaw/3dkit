@@ -407,20 +407,23 @@ export const typesByCategory: Record<string, readonly string[]> = {
   Sofa: ["2-Seater", "3-Seater", "L-Shape"],
 };
 
-const typeBySlug: Record<string, string> = {
-  "eames-lounge-chair": "Lounge Chair",
-  "sloan-3-seater-sofa": "3-Seater",
-  "noguchi-table": "Round",
-  "oak-media-console": "Console",
-  "olive-velvet-armchair": "Lounge Chair",
-  "cube-ottoman": "Cube",
-  "yves-complete-living-room-set": "L-Shape",
-  "marble-tripod-side-table": "Round",
-  "harlow-dining-set": "Rectangular",
-  "azure-patio-set": "Full Set",
+const sofaTypeOverrides: Record<string, string> = {
+  "vella-curved-sofa": "3-Seater",
+  "kessler-tufted-sofa": "3-Seater",
+  "dune-modular-sofa": "L-Shape",
+  "lisbon-outdoor-sofa": "2-Seater",
 };
 
-export const getType = (slug: string) => typeBySlug[slug] ?? "Full Set";
+/** Returns the sofa seating type, or undefined for categories without types yet. */
+export const getType = (slug: string): string | undefined => {
+  const product = products.find((p) => p.slug === slug);
+  if (!product || product.category !== "Sofa") return undefined;
+  const name = product.name.toLowerCase();
+  if (name.includes("l-shape") || name.includes("sectional")) return "L-Shape";
+  if (name.includes("3-seater")) return "3-Seater";
+  if (name.includes("2-seater")) return "2-Seater";
+  return sofaTypeOverrides[slug] ?? "3-Seater";
+};
 
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
 export const newReleases = products.filter((p) => p.isNew);
