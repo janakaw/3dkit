@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as FreeRouteImport } from './routes/free'
+import { Route as LicenseRouteImport } from './routes/license'
 import { Route as MidpolyRouteImport } from './routes/midpoly'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
@@ -39,6 +40,11 @@ const CartRoute = CartRouteImport.update({
 const FreeRoute = FreeRouteImport.update({
   id: '/free',
   path: '/free',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicenseRoute = LicenseRouteImport.update({
+  id: '/license',
+  path: '/license',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MidpolyRoute = MidpolyRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/free': typeof FreeRoute
+  '/license': typeof LicenseRoute
   '/midpoly': typeof MidpolyRoute
   '/search': typeof SearchRoute
   '/signin': typeof SigninRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/cart'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/cart'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/cart'
     | '/free'
+    | '/license'
     | '/midpoly'
     | '/search'
     | '/signin'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
   FreeRoute: typeof FreeRoute
+  LicenseRoute: typeof LicenseRoute
   MidpolyRoute: typeof MidpolyRoute
   SearchRoute: typeof SearchRoute
   SigninRoute: typeof SigninRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/free'
       fullPath: '/free'
       preLoaderRoute: typeof FreeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/license': {
+      id: '/license'
+      path: '/license'
+      fullPath: '/license'
+      preLoaderRoute: typeof LicenseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/midpoly': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
   FreeRoute: FreeRoute,
+  LicenseRoute: LicenseRoute,
   MidpolyRoute: MidpolyRoute,
   SearchRoute: SearchRoute,
   SigninRoute: SigninRoute,
