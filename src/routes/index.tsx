@@ -96,7 +96,7 @@ function Index() {
               Access custom-tailored asset sets — available by subscription or individual model
               sale — for archviz, interior designers, architects and game creators.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="relative mt-7 flex flex-wrap items-center gap-3">
               <a
                 href="#collection"
                 className="inline-flex w-fit items-center rounded-full border border-primary-foreground/70 px-7 py-3 text-sm font-medium uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
@@ -109,16 +109,14 @@ function Index() {
               >
                 Mid-poly for game →
               </Link>
+              <button
+                onClick={openSubscribe}
+                className="absolute right-[-1.5rem] top-1/2 hidden -translate-y-1/2 rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 md:right-[-3.5rem] lg:block"
+              >
+                Subscribe for unlimited access
+              </button>
             </div>
           </div>
-          <button
-            id="hero-subscribe-tab"
-            onClick={openSubscribe}
-            className="absolute right-0 hidden rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 lg:block"
-            style={{ bottom: "var(--hero-cta-bottom, 96px)" }}
-          >
-            Subscribe for unlimited access
-          </button>
           <button
             onClick={openSubscribe}
             className="absolute bottom-4 left-6 rounded-full bg-primary-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90 lg:hidden"
