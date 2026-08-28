@@ -48,7 +48,8 @@ function Index() {
   const { category, sub, style } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
-  const setSearch = (next: IndexSearch) => navigate({ search: next });
+  const setSearch = (next: IndexSearch) =>
+    navigate({ search: next, resetScroll: false, replace: true });
 
   const filtered = useMemo(
     () =>
