@@ -1,4 +1,4 @@
-import hero from "@/assets/hero-living.jpg.asset.json";
+import hero from "@/assets/hero-r2.jpg.asset.json";
 import p1 from "@/assets/p1.jpg.asset.json";
 import p2 from "@/assets/p2.jpg.asset.json";
 import p3 from "@/assets/p3.jpg.asset.json";
@@ -336,3 +336,8 @@ export const getType = (slug: string) => typeBySlug[slug] ?? "Full Set";
 export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
 export const newReleases = products.filter((p) => p.isNew);
 export const formatPrice = (n: number) => (n === 0 ? "FREE" : `$${n.toFixed(2)} USD`);
+
+export const categorySlug = (c: string) => c.toLowerCase().replace(/\s+/g, "-");
+export const categoryFromSlug = (slug: string) =>
+  categories.find((c) => categorySlug(c) === slug.toLowerCase());
+export const PAGE_SIZE = 24;
