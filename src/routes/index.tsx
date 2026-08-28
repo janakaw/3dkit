@@ -112,8 +112,10 @@ function Index() {
             </div>
           </div>
           <button
+            id="hero-subscribe-tab"
             onClick={openSubscribe}
-            className="absolute right-0 top-1/2 hidden -translate-y-1/2 rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 lg:block"
+            className="absolute right-0 hidden rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 lg:block"
+            style={{ bottom: "var(--hero-cta-bottom, 96px)" }}
           >
             Subscribe for unlimited access
           </button>
