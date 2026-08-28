@@ -1,8 +1,10 @@
 import { Check, X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { Link } from "@tanstack/react-router";
 
 const plans = [
   {
+    slug: "freelancer",
     name: "Freelancer Plan",
     price: 19,
     target: "For 1-man indie developers, students, or freelancers with under $100k annual revenue.",
@@ -14,6 +16,7 @@ const plans = [
     ],
   },
   {
+    slug: "studio",
     name: "Studio Plan",
     price: 49,
     target: "For small-to-medium game studios or companies with over $100k annual revenue.",
@@ -78,11 +81,16 @@ export function SubscribeModal({ open, onClose }: { open: boolean; onClose: () =
                   </li>
                 ))}
               </ul>
-              <button className="mt-6 rounded-full bg-brand px-6 py-3 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90">
-                Start free trial
-              </button>
+              <Link
+                to="/subscribe/$plan"
+                params={{ plan: plan.slug }}
+                onClick={onClose}
+                className="mt-6 block rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
+              >
+                Subscribe
+              </Link>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                7 days free · cancel any time in 2 clicks
+                Billed monthly · cancel any time in 2 clicks
               </p>
             </div>
           ))}

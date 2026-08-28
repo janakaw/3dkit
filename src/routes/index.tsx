@@ -71,7 +71,7 @@ function Index() {
         <div className="relative overflow-hidden rounded-2xl">
           <img
             src={heroImage}
-            alt="Photorealistic 3D rendered modern living room interior"
+            alt="Custom-designed 3D living room set with modular sofa, marble coffee table and lounge chair"
             width={1920}
             height={912}
             className="h-[420px] w-full object-cover md:h-[520px]"
@@ -85,8 +85,8 @@ function Index() {
               Premium 3D furniture sets, ready for render or engine.
             </h1>
             <p className="mt-4 max-w-md text-sm text-primary-foreground/85 md:text-base">
-              Original models designed in-house for archviz, interior designers, architects and
-              game developers. One subscription from $19/mo — cancel anytime.
+              Access custom-tailored asset sets — available by subscription or individual model
+              sale — for archviz, interior designers, architects and game creators.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <a
@@ -101,14 +101,20 @@ function Index() {
               >
                 Mid-poly for game →
               </Link>
-              <button
-                onClick={openSubscribe}
-                className="inline-flex w-fit items-center rounded-full bg-primary-foreground px-7 py-3 text-sm font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90"
-              >
-                Subscribe for unlimited access
-              </button>
             </div>
           </div>
+          <button
+            onClick={openSubscribe}
+            className="absolute right-0 top-1/2 hidden -translate-y-1/2 rounded-l-full bg-primary-foreground py-4 pl-8 pr-6 text-xs font-semibold uppercase tracking-[0.12em] text-foreground shadow-lg transition-opacity hover:opacity-90 lg:block"
+          >
+            Subscribe for unlimited access
+          </button>
+          <button
+            onClick={openSubscribe}
+            className="absolute bottom-4 left-6 rounded-full bg-primary-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-opacity hover:opacity-90 lg:hidden"
+          >
+            Subscribe for unlimited access
+          </button>
         </div>
       </section>
 
