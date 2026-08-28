@@ -9,7 +9,7 @@ import {
   products,
   setSubcategories,
   styles,
-  types,
+  typesByCategory,
 } from "@/lib/products";
 
 export const Route = createFileRoute("/midpoly")({
@@ -118,7 +118,7 @@ function MidPolyPage() {
           All Product
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Mid-poly · game-ready · baked normals, LODs and 2K PBR atlases for Unreal and Unity.
+          Mid-poly · game-ready · PBR material.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -141,6 +141,7 @@ function MidPolyPage() {
               onClick={() => {
                 setCategory(c);
                 setSub(undefined);
+                setType(undefined);
               }}
               className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                 category === c
@@ -183,7 +184,14 @@ function MidPolyPage() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Dropdown label="Style" options={styles} value={style} onChange={setStyle} />
-          <Dropdown label="Type" options={types} value={type} onChange={setType} />
+          {category && typesByCategory[category] && (
+            <Dropdown
+              label="Type"
+              options={typesByCategory[category]!}
+              value={type}
+              onChange={setType}
+            />
+          )}
           <span className="self-center text-xs text-muted-foreground">
             {filtered.length} model{filtered.length === 1 ? "" : "s"}
           </span>

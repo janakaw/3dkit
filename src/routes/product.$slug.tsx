@@ -1,21 +1,17 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Box,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
-  Facebook,
   FileText,
   Grid2x2,
-  Instagram,
   LifeBuoy,
-  Music2,
   RefreshCw,
   ShoppingCart,
   Sparkles,
-  Youtube,
 } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
@@ -84,8 +80,14 @@ function ProductPage() {
   const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
   const formats = tier === "mid" ? midFormats : highFormats;
 
-  const gallery = [product.image, ...products.filter((p) => p.slug !== product.slug).slice(0, 4).map((p) => p.image)];
+  const gallery = [
+    product.image,
+    ...products.filter((p) => p.slug !== product.slug).slice(0, 8).map((p) => p.image),
+  ];
   const [active, setActive] = useState(0);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const scrollStrip = (d: number) =>
+    stripRef.current?.scrollBy({ left: d * 240, behavior: "smooth" });
   const step = (d: number) => setActive((i) => (i + d + gallery.length) % gallery.length);
 
   const specs = [
@@ -144,26 +146,45 @@ function ProductPage() {
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-5 gap-3">
-              {gallery.map((src, i) => (
-                <button
-                  key={src + i}
-                  onClick={() => setActive(i)}
-                  aria-label={`View image ${i + 1}`}
-                  className={`overflow-hidden rounded-lg transition-all ${
-                    active === i ? "ring-2 ring-brand" : "opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <img
-                    src={src}
-                    alt={`${product.name} view ${i + 1}`}
-                    loading="lazy"
-                    width={320}
-                    height={240}
-                    className="aspect-[4/3] w-full object-cover"
-                  />
-                </button>
-              ))}
+            <div className="relative mt-4">
+              <div
+                ref={stripRef}
+                className="flex gap-3 overflow-x-auto scroll-smooth px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {gallery.map((src, i) => (
+                  <button
+                    key={src + i}
+                    onClick={() => setActive(i)}
+                    aria-label={`View image ${i + 1}`}
+                    className={`w-[18%] shrink-0 overflow-hidden rounded-lg transition-all ${
+                      active === i ? "ring-2 ring-brand" : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={src}
+                      alt={`${product.name} view ${i + 1}`}
+                      loading="lazy"
+                      width={320}
+                      height={240}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => scrollStrip(-1)}
+                aria-label="Scroll thumbnails left"
+                className="absolute left-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-colors hover:border-brand hover:text-brand"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                onClick={() => scrollStrip(1)}
+                aria-label="Scroll thumbnails right"
+                className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-colors hover:border-brand hover:text-brand"
+              >
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
             </div>
 
             <div className="mt-10 border-t border-border pt-7">
@@ -270,41 +291,6 @@ function ProductPage() {
           </div>
         </section>
 
-        <section className="mt-16 border-t border-border pt-10">
-          <div className="flex flex-wrap items-center justify-between gap-8">
-            <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-base font-medium text-muted-foreground">
-              <Link to="/about" className="transition-colors hover:text-foreground">
-                About
-              </Link>
-              <span className="cursor-pointer transition-colors hover:text-foreground">Terms</span>
-              <span className="cursor-pointer transition-colors hover:text-foreground">
-                Support
-              </span>
-              <span className="cursor-pointer transition-colors hover:text-foreground">
-                Contact
-              </span>
-              <span className="cursor-pointer transition-colors hover:text-foreground">
-                Standard License
-              </span>
-            </nav>
-            <div className="flex items-center gap-4">
-              {[
-                { icon: Youtube, label: "YouTube" },
-                { icon: Instagram, label: "Instagram" },
-                { icon: Facebook, label: "Facebook" },
-                { icon: Music2, label: "TikTok" },
-              ].map(({ icon: Icon, label }) => (
-                <button
-                  key={label}
-                  aria-label={label}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
-                >
-                  <Icon className="h-5 w-5" aria-hidden />
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
 
       <SiteFooter />
