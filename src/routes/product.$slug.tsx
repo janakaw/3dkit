@@ -137,18 +137,6 @@ function ProductPage() {
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 {product.description}
               </p>
-
-              <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-foreground">
-                In the box
-              </h3>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {product.specs.map((s) => (
-                  <li key={s} className="flex gap-2 text-sm text-muted-foreground">
-                    <span aria-hidden>•</span>
-                    {s}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
 
@@ -168,7 +156,6 @@ function ProductPage() {
                   Buy individually
                 </p>
                 <p className="text-xl font-bold text-foreground">{formatPrice(variant.price)}</p>
-                <p className="text-[11px] text-muted-foreground">One-time purchase · yours forever</p>
               </div>
               <button className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90">
                 <ShoppingCart className="h-4 w-4" aria-hidden />
