@@ -45,6 +45,12 @@ export function SiteHeader() {
             ),
           )}
           <Link
+            to="/midpoly"
+            className="rounded-full border border-primary px-3 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            Mid-Poly Furniture
+          </Link>
+          <Link
             to="/free"
             className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
