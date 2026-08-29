@@ -1,0 +1,7 @@
+{
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "3dkit.co", "custom_domain": true },
+    { "pattern": "www.3dkit.co", "custom_domain": true }
+  ]
+}
