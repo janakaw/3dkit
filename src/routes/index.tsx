@@ -7,12 +7,11 @@ import {
   PAGE_SIZE,
   categories,
   categorySlug,
+  getProducts,
   heroImage,
-  newReleases,
-  products,
   setSubcategories,
   styles,
-} from "@/lib/products";
+} from "@/lib/catalog";
 
 type IndexSearch = {
   category?: string | undefined;
@@ -22,6 +21,7 @@ type IndexSearch = {
 };
 
 export const Route = createFileRoute("/")({
+  loader: () => getProducts(),
   validateSearch: (search: Record<string, unknown>): IndexSearch => ({
     category: typeof search["category"] === "string" ? (search["category"] as string) : undefined,
     sub: typeof search["sub"] === "string" ? (search["sub"] as string) : undefined,
@@ -50,6 +50,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const products = Route.useLoaderData();
   const { category, sub, style, page = 1 } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
@@ -64,8 +65,14 @@ function Index() {
         if (style && p.style !== style) return false;
         return true;
       }),
-    [category, sub, style],
+    [category, sub, style, products],
   );
+
+  // No "is this actually new" signal from the backend yet (see
+  // adapt-product.ts) — falls back to the first 4 of the full list so the
+  // section isn't just empty. Revisit once the backend has real data here.
+  const newReleases = products.filter((p) => p.isNew);
+  const newReleaseItems = (newReleases.length > 0 ? newReleases : products).slice(0, 4);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(Math.max(1, page), totalPages);
@@ -141,7 +148,7 @@ function Index() {
       <section className="mx-auto max-w-[1400px] px-5 pt-12">
         <h2 className="text-2xl font-bold text-foreground">New Releases</h2>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
-          {newReleases.slice(0, 4).map((p) => (
+          {newReleaseItems.map((p) => (
             <ProductCard key={p.slug} product={p} />
           ))}
         </div>

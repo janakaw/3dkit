@@ -2,13 +2,7 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
-import {
-  PAGE_SIZE,
-  categoryFromSlug,
-  products,
-  setSubcategories,
-  styles,
-} from "@/lib/products";
+import { PAGE_SIZE, categoryFromSlug, getProducts, setSubcategories, styles } from "@/lib/catalog";
 
 type CategorySearch = {
   page?: number | undefined;
@@ -22,10 +16,11 @@ export const Route = createFileRoute("/category/$category")({
     sub: typeof search["sub"] === "string" ? (search["sub"] as string) : undefined,
     style: typeof search["style"] === "string" ? (search["style"] as string) : undefined,
   }),
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const category = categoryFromSlug(params.category);
     if (!category) throw notFound();
-    return { category };
+    const products = await getProducts();
+    return { category, products };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -50,7 +45,7 @@ export const Route = createFileRoute("/category/$category")({
 });
 
 function CategoryPage() {
-  const { category } = Route.useLoaderData();
+  const { category, products } = Route.useLoaderData();
   const { page = 1, sub, style } = Route.useSearch();
   const navigate = useNavigate({ from: "/category/$category" });
 

@@ -16,13 +16,11 @@ import {
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { openSubscribe } from "@/components/SubscribeModal";
-import {
-  formatPrice,
-  getProduct,
-  getVariant,
-  products,
-  type PolyTier,
-} from "@/lib/products";
+import { formatPrice, getProduct, getVariant, type PolyTier } from "@/lib/catalog";
+// "Related products" strip below still reads the static mock list
+// directly — that's the listing-page tier of the port, not done yet.
+// Only the single-product lookup above is wired to VITE_DATA_SOURCE so far.
+import { products } from "@/lib/products";
 
 type ProductSearch = { tier?: PolyTier | undefined };
 
@@ -30,8 +28,8 @@ export const Route = createFileRoute("/product/$slug")({
   validateSearch: (search: Record<string, unknown>): ProductSearch => ({
     tier: search["tier"] === "mid" ? "mid" : undefined,
   }),
-  loader: ({ params }) => {
-    const product = getProduct(params.slug);
+  loader: async ({ params }) => {
+    const product = await getProduct(params.slug);
     if (!product) throw notFound();
     return { product };
   },
@@ -80,10 +78,15 @@ function ProductPage() {
   const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
   const formats = tier === "mid" ? midFormats : highFormats;
 
-  const gallery = [
-    product.image,
-    ...products.filter((p) => p.slug !== product.slug).slice(0, 8).map((p) => p.image),
-  ];
+  // Previously padded out with other products' images as fake extra
+  // "views" — besides depending on a Lovable-platform-only asset URL that
+  // 404s outside Lovable's own hosting, showing another product's photo as
+  // a "view" of this one was wrong regardless. `product.images` (see
+  // catalog.ts) now carries the real per-product photo set from the
+  // backend (falling back to the single `product.image` when a product
+  // only has one), so the gallery only ever shows this product's own
+  // images.
+  const gallery = product.images;
   const [active, setActive] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
   const scrollStrip = (d: number) =>

@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search as SearchIcon } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/lib/products";
+import { getProducts } from "@/lib/catalog";
 
 type SearchParams = { q?: string | undefined };
 
 export const Route = createFileRoute("/search")({
+  loader: () => getProducts(),
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
     q: typeof search["q"] === "string" ? (search["q"] as string) : undefined,
   }),
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/search")({
 });
 
 function SearchPage() {
+  const products = Route.useLoaderData();
   const { q } = Route.useSearch();
   const navigate = useNavigate({ from: "/search" });
   const query = (q ?? "").trim().toLowerCase();
