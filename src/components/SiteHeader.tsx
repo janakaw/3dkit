@@ -3,6 +3,7 @@ import { ChevronDown, Facebook, Instagram, LogOut, Music2, Search, ShoppingCart,
 import { useEffect, useState } from "react";
 import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
@@ -102,6 +103,7 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
+          <ThemeToggle />
           <Link to="/search" aria-label="Search models" className="text-muted-foreground transition-colors hover:text-foreground">
             <Search className="h-5 w-5" aria-hidden />
           </Link>
