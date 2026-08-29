@@ -30,14 +30,30 @@ const PLACEHOLDER_TEXT = "Not specified yet";
 const PLACEHOLDER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Crect width='800' height='800' fill='%23e5e5e5'/%3E%3Ctext x='400' y='400' font-family='sans-serif' font-size='28' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3EImage coming soon%3C/text%3E%3C/svg%3E";
 
-function cheapestCalculatedPrice(product: HttpTypes.StoreProduct): number {
+function cheapestVariant(product: HttpTypes.StoreProduct): { id: string; price: number } | null {
+  let best: { id: string; price: number } | null = null;
   for (const variant of product.variants ?? []) {
     const amount = variant.calculated_price?.calculated_amount;
-    if (typeof amount === "number") {
-      return amount;
+    if (typeof amount !== "number" || !variant.id) continue;
+    if (!best || amount < best.price) {
+      best = { id: variant.id, price: amount };
     }
   }
-  return 0;
+  return best;
+}
+
+/**
+ * The cheapest variant's id, exposed alongside the `Product` shape (see
+ * catalog.ts's `Product & { variantId }`) so "Add to Cart" has something
+ * real to send to Medusa's cart API. `products.ts`'s mock `Product` has no
+ * concept of variants at all — the high/mid "poly tier" toggle
+ * (`getVariant`) is pure display math over a single mock price, not a
+ * second real Medusa variant — so for now every tier adds this same
+ * cheapest variant to the cart. Revisit once/if the backend actually
+ * models high-poly vs. mid-poly as distinct variants.
+ */
+export function cheapestVariantId(product: HttpTypes.StoreProduct): string | null {
+  return cheapestVariant(product)?.id ?? null;
 }
 
 export function adaptStoreProduct(product: HttpTypes.StoreProduct): Product {
@@ -46,7 +62,7 @@ export function adaptStoreProduct(product: HttpTypes.StoreProduct): Product {
     name: product.title ?? "Untitled model",
     description: product.description ?? "No description available yet.",
     image: product.thumbnail ?? product.images?.[0]?.url ?? PLACEHOLDER_IMAGE,
-    price: cheapestCalculatedPrice(product),
+    price: cheapestVariant(product)?.price ?? 0,
 
     // Not modeled on the backend yet — placeholders, see file header.
     category: PLACEHOLDER_TEXT,

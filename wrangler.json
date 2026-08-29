@@ -1,9 +1,22 @@
 {
+  "compatibility_date": "2026-08-25",
   "workers_dev": false,
   "routes": [
-    { "pattern": "3dkit.co", "custom_domain": true },
-    { "pattern": "www.3dkit.co", "custom_domain": true },
-    { "pattern": "3dlounge.co", "custom_domain": true },
-    { "pattern": "www.3dlounge.co", "custom_domain": true }
+    {
+      "pattern": "3dkit.co",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.3dkit.co",
+      "custom_domain": true
+    },
+    {
+      "pattern": "3dlounge.co",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.3dlounge.co",
+      "custom_domain": true
+    }
   ]
 }

@@ -19,26 +19,37 @@
  */
 import * as mock from "@/lib/products";
 import type { Product as BaseProduct } from "@/lib/products";
-import { adaptStoreProduct } from "@/lib/medusa/adapt-product";
+import { adaptStoreProduct, cheapestVariantId } from "@/lib/medusa/adapt-product";
 import {
   getProductByHandle as medusaGetProductByHandle,
   getProductsList as medusaGetProductsList,
 } from "@/lib/medusa/products";
 
 /**
- * `products.ts`'s `Product` only ever carried one `image` — mock data never
- * had more. The real backend can have several photos per product (Medusa's
- * `product.images[]`), so the catalog-facade `Product` widens that with a
- * mandatory `images: string[]` (always at least the one from `image`),
- * without changing `products.ts` itself. Both branches below populate it,
- * so anything reading `product.images` never needs to branch on
+ * `products.ts`'s `Product` only ever carried one `image` and no variant
+ * identity at all — mock data has neither. The catalog-facade `Product`
+ * widens that with:
+ *   - `images: string[]` — the real backend's multiple photos per product
+ *     (falls back to the single `image` when there's only one).
+ *   - `variantId: string | null` — the Medusa variant to send to the cart
+ *     API for "Add to Cart" (see adapt-product.ts's `cheapestVariantId`).
+ *     `null` in mock mode, where there's no real backend variant to add.
+ * Neither changes `products.ts` itself. Both branches below populate both
+ * fields, so anything reading them never needs to branch on
  * `VITE_DATA_SOURCE`.
  */
-export type Product = BaseProduct & { images: string[] };
+export type Product = BaseProduct & { images: string[]; variantId: string | null };
 
-function withImages(product: BaseProduct, images?: string[]): Product {
-  const gallery = images?.filter(Boolean) ?? [];
-  return { ...product, images: gallery.length > 0 ? gallery : [product.image] };
+function withCatalogMeta(
+  product: BaseProduct,
+  opts: { images?: string[] | undefined; variantId?: string | null } = {},
+): Product {
+  const gallery = opts.images?.filter(Boolean) ?? [];
+  return {
+    ...product,
+    images: gallery.length > 0 ? gallery : [product.image],
+    variantId: opts.variantId ?? null,
+  };
 }
 
 function readEnv(key: string): string | undefined {
@@ -56,20 +67,20 @@ export async function getProduct(
 ): Promise<Product | undefined> {
   if (isMockDataSource) {
     const product = mock.getProduct(slug);
-    return product ? withImages(product) : undefined;
+    return product ? withCatalogMeta(product) : undefined;
   }
 
   const product = await medusaGetProductByHandle(slug, countryCode);
   if (!product) return undefined;
-  return withImages(
-    adaptStoreProduct(product),
-    product.images?.map((image) => image.url),
-  );
+  return withCatalogMeta(adaptStoreProduct(product), {
+    images: product.images?.map((image) => image.url),
+    variantId: cheapestVariantId(product),
+  });
 }
 
 export async function getProducts(countryCode: string = DEFAULT_COUNTRY_CODE): Promise<Product[]> {
   if (isMockDataSource) {
-    return mock.products.map((product) => withImages(product));
+    return mock.products.map((product) => withCatalogMeta(product));
   }
 
   // No real pagination/filtering support yet on the frontend side — fetch
@@ -79,10 +90,10 @@ export async function getProducts(countryCode: string = DEFAULT_COUNTRY_CODE): P
   // one request or once category/style actually exist on the backend.
   const { products } = await medusaGetProductsList({ countryCode, queryParams: { limit: 100 } });
   return products.map((product) =>
-    withImages(
-      adaptStoreProduct(product),
-      product.images?.map((image) => image.url),
-    ),
+    withCatalogMeta(adaptStoreProduct(product), {
+      images: product.images?.map((image) => image.url),
+      variantId: cheapestVariantId(product),
+    }),
   );
 }
 

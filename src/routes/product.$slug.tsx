@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
   Box,
@@ -16,7 +17,15 @@ import {
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { openSubscribe } from "@/components/SubscribeModal";
-import { formatPrice, getProduct, getVariant, type PolyTier } from "@/lib/catalog";
+import {
+  formatPrice,
+  getProduct,
+  getVariant,
+  isMockDataSource,
+  type PolyTier,
+} from "@/lib/catalog";
+import { addToCart } from "@/lib/medusa/cart";
+import { CART_QUERY_KEY } from "@/lib/medusa/cart-query";
 // "Related products" strip below still reads the static mock list
 // directly — that's the listing-page tier of the port, not done yet.
 // Only the single-product lookup above is wired to VITE_DATA_SOURCE so far.
@@ -75,6 +84,33 @@ function ProductPage() {
   const tier: PolyTier = searchTier === "mid" ? "mid" : "high";
   const variant = getVariant(product, tier);
   const [openDownload, setOpenDownload] = useState(false);
+  // Only for the "no variant to add" edge case (mock mode, or a real
+  // product missing a variant id) — the actual add-to-cart request/response
+  // lifecycle is tracked by the mutation below, not local state.
+  const [unavailable, setUnavailable] = useState(false);
+
+  const queryClient = useQueryClient();
+  const addToCartMutation = useMutation({
+    mutationFn: addToCart,
+    // Write the mutation's own response straight into the shared cart
+    // cache (see cart-query.ts) — the header badge and the cart page both
+    // read from this same query, so this is the only cache update needed;
+    // nothing needs to separately re-fetch.
+    onSuccess: (cart) => queryClient.setQueryData(CART_QUERY_KEY, cart),
+    onError: (err) => console.error("Failed to add to cart:", err),
+  });
+
+  const handleAddToCart = () => {
+    // Mock mode has no real Medusa variant to add (see catalog.ts's
+    // `variantId: string | null`) — nothing to wire up until a real
+    // backend product is selected.
+    if (isMockDataSource || !product.variantId) {
+      setUnavailable(true);
+      return;
+    }
+    setUnavailable(false);
+    addToCartMutation.mutate({ data: { variantId: product.variantId, countryCode: "us" } });
+  };
   const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
   const formats = tier === "mid" ? midFormats : highFormats;
 
@@ -214,9 +250,19 @@ function ProductPage() {
               {formatPrice(variant.price)}
             </p>
 
-            <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90">
+            <button
+              onClick={handleAddToCart}
+              disabled={addToCartMutation.isPending}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
               <ShoppingCart className="h-4 w-4" aria-hidden />
-              Add to Cart
+              {addToCartMutation.isPending
+                ? "Adding…"
+                : unavailable || addToCartMutation.isError
+                  ? "Couldn't add — try again"
+                  : addToCartMutation.isSuccess
+                    ? "Added to Cart"
+                    : "Add to Cart"}
             </button>
 
             {/* Download */}

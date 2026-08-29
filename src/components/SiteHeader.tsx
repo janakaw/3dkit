@@ -1,15 +1,26 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Facebook, Instagram, LogOut, Music2, Search, ShoppingCart, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
+import { cartQueryOptions } from "@/lib/medusa/cart-query";
 
 export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Single shared cart cache (see cart-query.ts) — every add/remove writes
+  // its result straight into this same query, so the badge picks it up on
+  // its next render with no fetch of its own. If this is the first
+  // cart-aware component to mount on a given page, TanStack Query fetches
+  // once here; if the cart page (or another instance of the header) is
+  // already mounted and has fetched, this just reads the shared cache.
+  const { data: cart } = useQuery(cartQueryOptions());
+  const cartCount = cart?.items?.length ?? 0;
 
   useEffect(() => {
     let active = true;
@@ -109,9 +120,11 @@ export function SiteHeader() {
           </Link>
           <Link to="/cart" aria-label="View cart" className="relative text-muted-foreground transition-colors hover:text-foreground">
             <ShoppingCart className="h-5 w-5" aria-hidden />
-            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-semibold text-brand-foreground">
-              3
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-semibold text-brand-foreground">
+                {cartCount}
+              </span>
+            )}
           </Link>
           {userName ? (
             <>
