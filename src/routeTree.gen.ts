@@ -23,6 +23,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedMyModelsRouteImport } from './routes/_authenticated.my-models'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
+import { Route as DebugMedusaSmokeRouteImport } from './routes/debug.medusa-smoke'
 import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
 import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
@@ -97,6 +98,11 @@ const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   path: '/category/$category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DebugMedusaSmokeRoute = DebugMedusaSmokeRouteImport.update({
+  id: '/debug/medusa-smoke',
+  path: '/debug/medusa-smoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentFailedRoute = PaymentFailedRouteImport.update({
   id: '/payment/failed',
   path: '/payment/failed',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/my-models': typeof AuthenticatedMyModelsRoute
   '/category/$category': typeof CategoryCategoryRoute
+  '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/my-models'
     | '/category/$category'
+    | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/my-models'
     | '/category/$category'
+    | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/my-models'
     | '/category/$category'
+    | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
+  DebugMedusaSmokeRoute: typeof DebugMedusaSmokeRoute
   PaymentFailedRoute: typeof PaymentFailedRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProductSlugRoute: typeof ProductSlugRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoryCategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/debug/medusa-smoke': {
+      id: '/debug/medusa-smoke'
+      path: '/debug/medusa-smoke'
+      fullPath: '/debug/medusa-smoke'
+      preLoaderRoute: typeof DebugMedusaSmokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payment/failed': {
       id: '/payment/failed'
       path: '/payment/failed'
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
+  DebugMedusaSmokeRoute: DebugMedusaSmokeRoute,
   PaymentFailedRoute: PaymentFailedRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
   ProductSlugRoute: ProductSlugRoute,
