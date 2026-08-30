@@ -58,6 +58,31 @@ export const deleteLineItem = createServerFn({ method: "POST", strict: { output:
     cartServer.deleteLineItem(lineId),
   );
 
+// Generic cart-field write — used for billing address + email during
+// checkout (see routes/checkout.tsx). `HttpTypes.StoreUpdateCart` also
+// covers things like `region_id`/`promo_codes`, but those already have
+// their own narrower wrappers below (`updateCartRegion`, `applyPromotions`)
+// — reach for this one only when nothing more specific fits.
+export const updateCart = createServerFn({ method: "POST", strict: { output: false } })
+  .validator((data: HttpTypes.StoreUpdateCart) => data)
+  .handler(({ data }): Promise<HttpTypes.StoreCart> => cartServer.updateCart(data));
+
+// Takes just the cart's id + its payment collection's id (if any), not
+// the whole `HttpTypes.StoreCart` object — the SDK call this wraps only
+// ever reads those two fields (see cart.server.ts's header comment on
+// `initiatePaymentSession`). Deliberately narrow: passing the full cart
+// type through this validator tripped an `exactOptionalPropertyTypes`
+// cascade through its deeply-nested optional fields (items[].tax_lines[]
+// .item.product.categories, etc.) that TanStack Start's `ConstrainValidator`
+// couldn't satisfy — see decisions doc.
+export const initiatePaymentSession = createServerFn({ method: "POST", strict: { output: false } })
+  .validator(
+    (data: { cartId: string; paymentCollectionId: string | undefined; providerId: string }) => data,
+  )
+  .handler(({ data }): Promise<HttpTypes.StorePaymentCollection> =>
+    cartServer.initiatePaymentSession(data.cartId, data.paymentCollectionId, data.providerId),
+  );
+
 export const applyPromotions = createServerFn({ method: "POST", strict: { output: false } })
   .validator((codes: string[]) => codes)
   .handler(({ data: codes }): Promise<HttpTypes.StoreCart> => cartServer.applyPromotions(codes));

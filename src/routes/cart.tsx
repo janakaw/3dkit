@@ -41,6 +41,7 @@ function CartPage() {
   const queryClient = useQueryClient();
   const { data: cart } = useQuery({ ...cartQueryOptions(), initialData: initialCart });
   const [pendingLineId, setPendingLineId] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const items = cart?.items ?? [];
 
   const clampMutation = useMutation({
@@ -68,9 +69,27 @@ function CartPage() {
 
   const removeMutation = useMutation({
     mutationFn: deleteLineItem,
-    onMutate: (variables) => setPendingLineId(variables.data),
+    onMutate: (variables) => {
+      setRemoveError(null);
+      setPendingLineId(variables.data);
+    },
     onSuccess: (updated) => queryClient.setQueryData(CART_QUERY_KEY, updated),
-    onError: (err) => console.error("Failed to remove item:", err),
+    // A delete can fail against a cart the backend has already marked
+    // completed (see cart.server.ts's completed-cart self-heal) — the
+    // cookie gets cleared server-side as part of that failure, but this
+    // query's cached data doesn't know that on its own. Previously this
+    // only logged to the console: the button looked "stuck" with no
+    // feedback and the same stale item kept showing up on every reload,
+    // because nothing ever asked the server for a fresh read. Surfacing
+    // the error *and* refetching fixes both — the refetch picks up the
+    // now-cleared cart (empty, or a new one) instead of leaving the old
+    // cached item on screen forever.
+    onError: (err) => {
+      setRemoveError(
+        err instanceof Error ? err.message : "Couldn't remove that item — please try again.",
+      );
+      void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
+    },
     onSettled: () => setPendingLineId(null),
   });
 
@@ -85,6 +104,8 @@ function CartPage() {
         <h1 className="font-display text-3xl font-extrabold uppercase tracking-tight text-foreground">
           Your cart
         </h1>
+
+        {removeError && <p className="mt-4 text-sm text-destructive">{removeError}</p>}
 
         {items.length === 0 ? (
           <p className="mt-6 text-sm text-muted-foreground">
@@ -152,17 +173,12 @@ function CartPage() {
                   {formatPrice(cart?.total ?? 0)}
                 </span>
               </div>
-              {/* Checkout still needs a payment session before
-                  `sdk.store.cart.complete()` will succeed for a non-zero
-                  cart — that's the next tier (checkout/payment), not this
-                  one. Left as a placeholder button on purpose. */}
-              <button
-                disabled
-                title="Checkout is coming in the next porting step (payment)"
-                className="mt-5 w-full rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground opacity-60"
+              <Link
+                to="/checkout"
+                className="mt-5 block w-full rounded-full bg-brand px-6 py-3.5 text-center text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90"
               >
                 Checkout
-              </button>
+              </Link>
               <button
                 onClick={openSubscribe}
                 className="mt-3 w-full rounded-full border border-brand px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
