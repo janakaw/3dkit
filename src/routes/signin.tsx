@@ -1,11 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
+type SignInSearch = {
+  mode?: "signin" | "signup" | undefined;
+};
+
 export const Route = createFileRoute("/signin")({
+  validateSearch: (search: Record<string, unknown>): SignInSearch => ({
+    mode: search["mode"] === "signup" ? "signup" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign In — 3Dkit 3D Furniture Library" },
@@ -25,12 +32,16 @@ export const Route = createFileRoute("/signin")({
 
 function SignInPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(
+    initialMode === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submitEmailAuth = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,7 +53,19 @@ function SignInPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { display_name: displayName } },
+          options: {
+            data: { display_name: displayName },
+            // Without this, Supabase falls back to the project's dashboard
+            // "Site URL" (defaults to http://localhost:3000 on a brand-new
+            // project) for the confirmation link's redirect_to. Explicitly
+            // pointing at wherever signup actually happened means it works
+            // the same on 3dkit.co, 3dlounge.co, and local dev — as long as
+            // each of those origins is also added to the Supabase project's
+            // Auth > URL Configuration > Redirect URLs allow-list (Supabase
+            // silently falls back to the Site URL if the origin isn't
+            // allow-listed, rather than erroring).
+            emailRedirectTo: `${window.location.origin}/auth/confirmed`,
+          },
         });
         if (error) throw error;
         if (!data.session) {
@@ -62,25 +85,13 @@ function SignInPage() {
     }
   };
 
-  const signInWithGoogle = async () => {
-    setBusy(true);
-    setMessage("");
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setMessage(result.error instanceof Error ? result.error.message : "Google sign-in was not completed.");
-      setBusy(false);
-      return;
-    }
-    if (!result.redirected) await navigate({ to: "/my-models" });
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto flex max-w-md flex-col px-5 py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Your model library</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
+          Your model library
+        </p>
         <h1 className="mt-3 font-display text-3xl font-extrabold uppercase tracking-tight text-foreground">
           {mode === "signin" ? "Sign in" : "Create account"}
         </h1>
@@ -88,19 +99,13 @@ function SignInPage() {
           Save models to your personal library and access your downloads from any device.
         </p>
 
-        <Button type="button" onClick={signInWithGoogle} disabled={busy} className="mt-8 h-12 w-full rounded-full">
-          Continue with Google
-        </Button>
-        <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          <span>or email</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <form className="space-y-4" onSubmit={submitEmailAuth}>
+        <form className="mt-8 space-y-4" onSubmit={submitEmailAuth}>
           {mode === "signup" && (
             <div>
-              <label htmlFor="displayName" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <label
+                htmlFor="displayName"
+                className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 Your name
               </label>
               <input
@@ -114,7 +119,10 @@ function SignInPage() {
             </div>
           )}
           <div>
-            <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <label
+              htmlFor="email"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Email
             </label>
             <input
@@ -128,21 +136,43 @@ function SignInPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <label
+              htmlFor="password"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={6}
-              placeholder="At least 6 characters"
-              className="mt-1.5 w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none focus:border-brand"
-            />
+            <div className="relative mt-1.5">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={6}
+                placeholder="At least 6 characters"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-11 text-sm text-foreground outline-none focus:border-brand"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                className="absolute inset-y-0 right-0 flex items-center px-3.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden />
+                )}
+              </button>
+            </div>
           </div>
-          <Button type="submit" disabled={busy} className="h-12 w-full rounded-full uppercase tracking-wide">
+          <Button
+            type="submit"
+            disabled={busy}
+            className="h-12 w-full rounded-full uppercase tracking-wide"
+          >
             {mode === "signin" ? "Sign in" : "Create account"}
           </Button>
         </form>
@@ -158,7 +188,10 @@ function SignInPage() {
         >
           {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
         </button>
-        <Link to="/" className="mt-4 text-center text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="mt-4 text-center text-sm text-muted-foreground hover:text-foreground"
+        >
           Continue browsing without an account
         </Link>
       </main>

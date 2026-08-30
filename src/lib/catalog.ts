@@ -24,6 +24,7 @@ import {
   getProductByHandle as medusaGetProductByHandle,
   getProductsList as medusaGetProductsList,
 } from "@/lib/medusa/products";
+import heroBanner from "@/assets/hero-banner.png";
 
 /**
  * `products.ts`'s `Product` only ever carried one `image` and no variant
@@ -107,10 +108,10 @@ export const formatPrice = mock.formatPrice;
 // hosting infra — it 404s once the app is deployed on its own Cloudflare
 // Worker (see decisions doc, 2026-08-29 entry on broken mock image hosting).
 // Overridden here rather than in products.ts so that file stays untouched
-// per the mock/production safety-switch requirement.
-const HERO_PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900'%3E%3Crect width='1600' height='900' fill='%23e5e5e5'/%3E%3Ctext x='800' y='450' font-family='sans-serif' font-size='36' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3EImage coming soon%3C/text%3E%3C/svg%3E";
-export const heroImage = HERO_PLACEHOLDER;
+// per the mock/production safety-switch requirement. Real asset bundled
+// via Vite's static-asset import instead of a Lovable-hosted URL, so it
+// works in every environment (dev, preview, production).
+export const heroImage = heroBanner;
 export const categories = mock.categories;
 export const setSubcategories = mock.setSubcategories;
 export const styles = mock.styles;

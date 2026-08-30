@@ -23,6 +23,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedMyModelsRouteImport } from './routes/_authenticated.my-models'
+import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
 import { Route as DebugMedusaSmokeRouteImport } from './routes/debug.medusa-smoke'
 import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
@@ -100,6 +101,11 @@ const AuthenticatedMyModelsRoute = AuthenticatedMyModelsRouteImport.update({
   path: '/my-models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
+  id: '/auth/confirmed',
+  path: '/auth/confirmed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   id: '/category/$category',
   path: '/category/$category',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/_authenticated/my-models': typeof AuthenticatedMyModelsRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/my-models'
+    | '/auth/confirmed'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/my-models'
+    | '/auth/confirmed'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/_authenticated/my-models'
+    | '/auth/confirmed'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  AuthConfirmedRoute: typeof AuthConfirmedRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
   DebugMedusaSmokeRoute: typeof DebugMedusaSmokeRoute
   PaymentFailedRoute: typeof PaymentFailedRoute
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyModelsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/auth/confirmed': {
+      id: '/auth/confirmed'
+      path: '/auth/confirmed'
+      fullPath: '/auth/confirmed'
+      preLoaderRoute: typeof AuthConfirmedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$category': {
       id: '/category/$category'
       path: '/category/$category'
@@ -474,6 +494,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  AuthConfirmedRoute: AuthConfirmedRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
   DebugMedusaSmokeRoute: DebugMedusaSmokeRoute,
   PaymentFailedRoute: PaymentFailedRoute,
