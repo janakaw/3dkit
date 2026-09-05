@@ -36,6 +36,11 @@ import { sdk } from "./config";
 import { medusaError } from "./errors";
 import { getAuthHeaders, getCartId, removeCartId, setCartId } from "./cookies.server";
 import { getRegion } from "./regions";
+// Both this file and client.server.ts are `.server.ts` modules, so a
+// top-level import here is safe (never reaches the client bundle) — see
+// client.server.ts's own header comment, which only warns against
+// top-level-importing it from a route/loader file.
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // A cart can end up marked "completed" server-side even when the client
 // never learns the order succeeded — e.g. `sdk.store.cart.complete()`'s
@@ -274,14 +279,56 @@ export async function updateRegion(countryCode: string): Promise<HttpTypes.Store
 export type PlaceOrderResult =
   { type: "order"; orderId: string } | { type: "cart"; cart: HttpTypes.StoreCart };
 
-export async function placeOrder(): Promise<PlaceOrderResult> {
+// Bookkeeping-only: records that this Supabase-authenticated shopper
+// placed this Medusa order, via the service-role client (bypasses RLS —
+// see the `order_records` migration's header comment for why writes are
+// restricted to the server this way). Called only after Medusa has
+// already, genuinely created the order — never anything this can affect
+// the outcome of a real purchase, which is why every caller of this
+// treats a failure here as log-and-continue, not a thrown error.
+//
+// `.from("order_records")` is cast through `any` because `order_records`
+// isn't in the generated `Database` type yet — `types.ts` is regenerated
+// from the user's own `supabase gen types typescript --linked` after the
+// migration is applied (same flow as every other Supabase schema change
+// in this project, see decisions doc, Tier 6). Narrow, disclosed cast;
+// safe to tighten once that regeneration has happened.
+async function recordOrderForUser(
+  userId: string,
+  order: HttpTypes.StoreOrder,
+): Promise<void> {
+  const row = {
+    user_id: userId,
+    medusa_order_id: order.id,
+    email: order.email ?? null,
+    total: order.total ?? null,
+    currency_code: order.currency_code ?? null,
+  };
+  const { error } = await (supabaseAdmin.from as (table: string) => {
+    insert: (values: typeof row) => Promise<{ error: { message: string } | null }>;
+  })("order_records").insert(row);
+  if (error) {
+    throw new Error(`order_records insert failed: ${error.message}`);
+  }
+}
+
+// `userId` comes from `requireSupabaseAuth` middleware (see cart.ts) —
+// verified server-side against the shopper's real Supabase session, never
+// client-supplied. Checkout sits behind the `_authenticated` route guard
+// (see decisions doc, Tier 8), so a valid session is always expected here
+// in practice; if the token has expired/gone invalid mid-checkout, the
+// middleware rejects the call before this function is even entered — the
+// same "your card may have been charged, contact support" path checkout
+// already shows for any other placeOrder() failure (see Tier 9) handles
+// that case with no special-casing needed here.
+export async function placeOrder(userId: string): Promise<PlaceOrderResult> {
   const cartId = getCartId();
   if (!cartId) {
     logCart("placeOrder called with no cart id in cookie");
     throw new Error("No existing cart found when placing an order");
   }
 
-  logCart("placeOrder: completing cart", { cartId });
+  logCart("placeOrder: completing cart", { cartId, userId });
 
   const authHeaders = getAuthHeaders();
   const cartRes = await sdk.store.cart
@@ -298,6 +345,21 @@ export async function placeOrder(): Promise<PlaceOrderResult> {
   if (cartRes.type === "order") {
     logCart("placeOrder: order created", { cartId, orderId: cartRes.order.id });
     removeCartId();
+    try {
+      await recordOrderForUser(userId, cartRes.order);
+      logCart("placeOrder: order recorded against user", { orderId: cartRes.order.id, userId });
+    } catch (error) {
+      // The real order already succeeded in Medusa — a bookkeeping
+      // failure here must never surface as a failed checkout. Logged with
+      // full detail so a missing order_records row can still be diagnosed
+      // and backfilled manually if it ever happens.
+      logCart("placeOrder: failed to record order against user (order itself succeeded)", {
+        cartId,
+        orderId: cartRes.order.id,
+        userId,
+        ...errorDetails(error),
+      });
+    }
     return { type: "order", orderId: cartRes.order.id };
   }
 

@@ -25,6 +25,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { HttpTypes } from "@medusajs/types";
 import * as cartServer from "./cart.server";
 import type { PlaceOrderResult } from "./cart.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // POST, not GET, even though this only reads: a same-URL, no-args "GET"
 // server function is an easy target for the browser's default HTTP GET
@@ -93,6 +94,15 @@ export const updateCartRegion = createServerFn({ method: "POST", strict: { outpu
     cartServer.updateRegion(countryCode),
   );
 
-export const placeOrder = createServerFn({ method: "POST", strict: { output: false } }).handler(
-  (): Promise<PlaceOrderResult> => cartServer.placeOrder(),
-);
+// Requires a verified Supabase session — checkout sits behind the
+// `_authenticated` route guard already (see decisions doc, Tier 8), so
+// this is a defense-in-depth check on the server function itself, not the
+// only gate. `requireSupabaseAuth` (see auth-middleware.ts) validates the
+// bearer token the client's `attachSupabaseAuth` middleware already
+// attaches to every server function call (see start.ts) and hands back
+// `context.userId` — the real, server-verified Supabase user id used to
+// record this order against the right shopper (see cart.server.ts's
+// `recordOrderForUser`). Never trust a client-supplied user id for this.
+export const placeOrder = createServerFn({ method: "POST", strict: { output: false } })
+  .middleware([requireSupabaseAuth])
+  .handler(({ context }): Promise<PlaceOrderResult> => cartServer.placeOrder(context.userId));
