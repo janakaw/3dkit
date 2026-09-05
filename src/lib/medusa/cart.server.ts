@@ -51,17 +51,51 @@ import { getRegion } from "./regions";
 // helpers below exist to self-heal that: clear the stale cookie the
 // moment a completed cart is detected, on read or on write, so the next
 // operation starts a fresh cart instead of repeating the same failure.
+// [checkout-logging] Server-side log helper. Runs inside the Cloudflare
+// Worker, so `console.log`/`console.error` here land in Cloudflare's own
+// Workers logs (`wrangler tail` / dashboard Logs) — durable and visible
+// even when nobody had browser devtools open, unlike client-side logging.
+function logCart(event: string, details?: Record<string, unknown>): void {
+  console.log(`[cart.server] ${event}`, details ?? {});
+}
+
+function errorDetails(error: unknown): Record<string, unknown> {
+  if (error instanceof FetchError) {
+    return { status: error.status, statusText: error.statusText, message: error.message };
+  }
+  if (error instanceof Error) {
+    return { message: error.message, name: error.name };
+  }
+  return { value: String(error) };
+}
+
+// A cart-write can lose a completion race two ways: Medusa says the cart
+// is flat-out "already completed" (the original case this self-heal was
+// built for — a dropped/retried response after the backend had already
+// finalized the order), or — the case that slipped through undetected
+// until now — two near-simultaneous `placeOrder()` calls against the same
+// cart (e.g. a double-submit on the "Pay" button) race each other, the
+// winner completes the cart, and the loser gets back a plain HTTP 409
+// Conflict from Medusa. Both are the same underlying situation from the
+// shopper's point of view — this cart is done, stop retrying against it —
+// so both are now treated identically instead of the 409 falling through
+// as a raw, unhandled "[409 Conflict] ..." error.
 function isCartCompletedError(error: unknown): boolean {
-  return error instanceof FetchError && /already completed/i.test(error.message);
+  return (
+    error instanceof FetchError &&
+    (error.status === 409 || /already completed/i.test(error.message))
+  );
 }
 
 function withCompletedCartRecovery(error: unknown): never {
   if (isCartCompletedError(error)) {
+    logCart("completed-cart self-heal triggered", errorDetails(error));
     removeCartId();
     throw new Error(
       "Your cart session had already been completed. It's been reset — please try again.",
     );
   }
+  logCart("unhandled cart error", errorDetails(error));
   return medusaError(error);
 }
 
@@ -243,18 +277,33 @@ export type PlaceOrderResult =
 export async function placeOrder(): Promise<PlaceOrderResult> {
   const cartId = getCartId();
   if (!cartId) {
+    logCart("placeOrder called with no cart id in cookie");
     throw new Error("No existing cart found when placing an order");
   }
+
+  logCart("placeOrder: completing cart", { cartId });
 
   const authHeaders = getAuthHeaders();
   const cartRes = await sdk.store.cart
     .complete(cartId, {}, authHeaders)
-    .catch(withCompletedCartRecovery);
+    .then((res) => {
+      logCart("placeOrder: cart.complete resolved", { cartId, resultType: res.type });
+      return res;
+    })
+    .catch((error: unknown) => {
+      logCart("placeOrder: cart.complete rejected", { cartId, ...errorDetails(error) });
+      return withCompletedCartRecovery(error);
+    });
 
   if (cartRes.type === "order") {
+    logCart("placeOrder: order created", { cartId, orderId: cartRes.order.id });
     removeCartId();
     return { type: "order", orderId: cartRes.order.id };
   }
 
+  logCart("placeOrder: cart.complete returned a cart, not an order (payment likely incomplete)", {
+    cartId,
+    cartPaymentStatus: cartRes.cart.payment_collection?.status,
+  });
   return { type: "cart", cart: cartRes.cart };
 }

@@ -7,11 +7,21 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
 type SignInSearch = {
   mode?: "signin" | "signup" | undefined;
+  redirect?: string | undefined;
 };
 
 export const Route = createFileRoute("/signin")({
   validateSearch: (search: Record<string, unknown>): SignInSearch => ({
     mode: search["mode"] === "signup" ? "signup" : undefined,
+    // Only ever an internal app-relative path (see _authenticated/route.tsx,
+    // the only place that sets this) — reject anything else so this can
+    // never be turned into an open redirect via a hand-crafted URL.
+    redirect:
+      typeof search["redirect"] === "string" &&
+      search["redirect"].startsWith("/") &&
+      !search["redirect"].startsWith("//")
+        ? search["redirect"]
+        : undefined,
   }),
   head: () => ({
     meta: [
@@ -32,7 +42,19 @@ export const Route = createFileRoute("/signin")({
 
 function SignInPage() {
   const navigate = useNavigate();
-  const { mode: initialMode } = Route.useSearch();
+  const { mode: initialMode, redirect: redirectTarget } = Route.useSearch();
+
+  // Two separate branches (rather than one call with a ternary options
+  // object) so each resolves against its own `navigate()` overload cleanly
+  // under `exactOptionalPropertyTypes` — `{ href }` and `{ to }` aren't the
+  // same options shape.
+  const goToRedirectOrMyModels = async () => {
+    if (redirectTarget) {
+      await navigate({ href: redirectTarget });
+    } else {
+      await navigate({ to: "/my-models" });
+    }
+  };
   const [mode, setMode] = useState<"signin" | "signup">(
     initialMode === "signup" ? "signup" : "signin",
   );
@@ -71,12 +93,12 @@ function SignInPage() {
         if (!data.session) {
           setMessage("Check your email to confirm your account, then sign in here.");
         } else {
-          await navigate({ to: "/my-models" });
+          await goToRedirectOrMyModels();
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        await navigate({ to: "/my-models" });
+        await goToRedirectOrMyModels();
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "We could not complete that request.");

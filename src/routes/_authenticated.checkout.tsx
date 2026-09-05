@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { HttpTypes } from "@medusajs/types";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { formatPrice } from "@/lib/catalog";
@@ -18,7 +18,26 @@ import { getStripe } from "@/lib/medusa/stripe";
 // unused complexity.
 const STRIPE_PROVIDER_ID = "pp_stripe_stripe";
 
-export const Route = createFileRoute("/checkout")({
+// [checkout-logging] Structured client-side logging for the whole
+// checkout → payment → order flow. Plain `console.log`/`console.error`
+// so it shows up in browser devtools (and can be grepped for the
+// "[checkout]" prefix) — see cart.server.ts's `logCart` for the
+// server-side half of this, which lands in Cloudflare's Workers logs
+// instead. Browser console output is only ever visible if devtools
+// happened to be open at the time, which is exactly why this alone
+// isn't enough and the server-side half exists too.
+function logCheckout(event: string, details?: Record<string, unknown>): void {
+  console.log(`[checkout] ${event}`, details ?? {});
+}
+
+function logCheckoutError(event: string, error: unknown, details?: Record<string, unknown>): void {
+  console.error(`[checkout] ${event}`, {
+    ...(details ?? {}),
+    error: error instanceof Error ? { message: error.message, name: error.name } : error,
+  });
+}
+
+export const Route = createFileRoute("/_authenticated/checkout")({
   head: () => ({
     meta: [{ title: "Checkout — 3Dkit" }, { name: "robots", content: "noindex" }],
   }),
@@ -72,11 +91,14 @@ function CheckoutPage() {
 
   const [billing, setBilling] = useState<BillingFormState>(emptyBillingForm);
 
-  // Prefill the email from the shopper's 3Dkit account (Supabase auth —
-  // a separate identity system from Medusa's own customer/guest-checkout
-  // model, see decisions doc) when they're signed in. Purely a
-  // convenience; checkout still works as a guest without it, since Medusa
-  // order creation doesn't require an authenticated customer.
+  // Prefill the email from the shopper's 3Dkit account (Supabase auth — a
+  // separate identity system from Medusa's own customer/guest-checkout
+  // model, see decisions doc). Checkout now sits behind `_authenticated`
+  // (see decisions doc, "block purchase without sign-up"), so a user is
+  // always present here — this fetch is just to read the email, not to
+  // gate anything itself. Medusa's own order creation still doesn't
+  // require an authenticated Medusa customer; the two identity systems
+  // remain unlinked beyond this prefill.
   useEffect(() => {
     let active = true;
     void supabase.auth.getUser().then(({ data }) => {
@@ -92,14 +114,20 @@ function CheckoutPage() {
 
   const billingMutation = useMutation({
     mutationFn: updateCart,
-    onSuccess: (updated) => queryClient.setQueryData(CART_QUERY_KEY, updated),
+    onSuccess: (updated) => {
+      logCheckout("billing:success", { cartId: updated.id, total: updated.total });
+      queryClient.setQueryData(CART_QUERY_KEY, updated);
+    },
     // A cart the backend has already marked completed (see
     // cart.server.ts's completed-cart self-heal — the cookie gets
     // cleared as part of the failure) will otherwise keep failing every
     // retry with the same error forever, since nothing here re-reads the
     // cart. Refetching picks up the now-`null` cart, which sends the
     // shopper back to `/cart` via the effect above.
-    onError: () => void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY }),
+    onError: (error) => {
+      logCheckoutError("billing:error", error);
+      void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
+    },
   });
 
   const paymentSessionMutation = useMutation({
@@ -108,15 +136,23 @@ function CheckoutPage() {
     // (see cart.server.ts) — merge it into the shared cart cache rather
     // than doing a separate `retrieveCart()` round trip to pick it up.
     onSuccess: (paymentCollection) => {
+      logCheckout("payment-session:success", {
+        paymentCollectionId: paymentCollection.id,
+        sessionCount: paymentCollection.payment_sessions?.length ?? 0,
+      });
       queryClient.setQueryData<HttpTypes.StoreCart | null | undefined>(CART_QUERY_KEY, (old) =>
         old ? { ...old, payment_collection: paymentCollection } : old,
       );
     },
-    onError: () => void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY }),
+    onError: (error) => {
+      logCheckoutError("payment-session:error", error);
+      void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
+    },
   });
 
   const handleBillingSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    logCheckout("billing:submit", { email: billing.email });
     const updated = await billingMutation.mutateAsync({
       data: {
         email: billing.email,
@@ -136,6 +172,7 @@ function CheckoutPage() {
     // (see decisions doc: `validateCartPaymentsStep`'s `canSkipPayment`),
     // so there's no payment session to initiate.
     if ((updated.total ?? 0) > 0) {
+      logCheckout("payment-session:init", { cartId: updated.id, total: updated.total });
       paymentSessionMutation.mutate({
         data: {
           cartId: updated.id,
@@ -143,6 +180,8 @@ function CheckoutPage() {
           providerId: STRIPE_PROVIDER_ID,
         },
       });
+    } else {
+      logCheckout("payment-session:skipped-zero-total", { cartId: updated.id });
     }
   };
 
@@ -355,18 +394,47 @@ function StripeCardForm({
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [cardComplete, setCardComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // [checkout-logging + fix] `submitting` (React state) is what disables
+  // the button, but it's read from a stale render closure and only takes
+  // effect after React re-renders — a fast double-click/double-tap can
+  // fire `handlePlaceOrder` twice before that happens. That's the
+  // suspected root cause of the reported bug: two near-simultaneous
+  // `placeOrder()` calls race against the same cart; one wins and creates
+  // the order, the other gets back an HTTP 409 Conflict from Medusa. A
+  // plain `useRef` is synchronous and not subject to that render timing,
+  // so it's used here as the actual re-entrancy guard, with `submitting`
+  // kept only for the UI (spinner text, visual disabled state).
+  const placingOrderRef = useRef(false);
+
   const placeOrderMutation = useMutation({
     mutationFn: () => placeOrder(),
-    // Same completed-cart self-heal as the billing/payment-session
-    // mutations above: refetch so a cart the backend already finalized
-    // (or force-expired) stops being retried against forever, sending
-    // the shopper back to `/cart` via checkout's redirect effect.
-    onError: () => void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY }),
+    onSuccess: (result) => {
+      logCheckout("placeOrder:success", {
+        cartId: cart.id,
+        resultType: result.type,
+        orderId: result.type === "order" ? result.orderId : undefined,
+      });
+    },
+    // [fix] Deliberately NOT invalidating/refetching the cart query here
+    // (unlike the billing/payment-session mutations above). By the time
+    // this mutation can fail, Stripe has already charged the card — this
+    // is the one error in the whole flow that happens *after* payment.
+    // The old behavior invalidated the cart query on any error, which
+    // (via cart.server.ts's completed-cart self-heal on `retrieveCart()`)
+    // could resolve the cart to `null`, which triggers checkout's own
+    // "nothing to check out, bounce to /cart" effect — ripping the error
+    // message off-screen within moments of it appearing. That's almost
+    // certainly the "red text that included 'conflict' for a very brief
+    // period of time and then vanished" the user reported. Logging here
+    // instead preserves the error long enough to read, and long enough to
+    // show up in the console/logs for debugging.
+    onError: (error) => {
+      logCheckoutError("placeOrder:error", error, { cartId: cart.id });
+    },
   });
 
   const handlePlaceOrder = async () => {
@@ -374,8 +442,19 @@ function StripeCardForm({
     const card = elements.getElement(CardElement);
     if (!card) return;
 
+    // [fix] Synchronous re-entrancy guard — see placingOrderRef comment
+    // above. Checked and set in the same tick, before any `await`, so a
+    // second call arriving before the first `setSubmitting(true)` has
+    // been rendered is still blocked.
+    if (placingOrderRef.current) {
+      logCheckout("placeOrder:blocked-duplicate-submit", { cartId: cart.id });
+      return;
+    }
+    placingOrderRef.current = true;
+
     setSubmitting(true);
     setError(null);
+    logCheckout("stripe:confirmCardPayment:start", { cartId: cart.id, total: cart.total });
 
     try {
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -396,9 +475,15 @@ function StripeCardForm({
       });
 
       if (stripeError) {
+        logCheckoutError("stripe:confirmCardPayment:error", stripeError, { cartId: cart.id });
         setError(stripeError.message ?? "Payment failed — please try again.");
         return;
       }
+      logCheckout("stripe:confirmCardPayment:result", {
+        cartId: cart.id,
+        paymentIntentId: paymentIntent?.id,
+        status: paymentIntent?.status,
+      });
       if (paymentIntent?.status !== "succeeded" && paymentIntent?.status !== "requires_capture") {
         setError(`Payment did not complete (status: ${paymentIntent?.status ?? "unknown"}).`);
         return;
@@ -408,18 +493,29 @@ function StripeCardForm({
       // the Medusa order. If this fails, the charge has still gone
       // through on Stripe's side, so the message below says so rather
       // than implying nothing happened.
+      logCheckout("placeOrder:start", { cartId: cart.id, paymentIntentId: paymentIntent?.id });
       const result = await placeOrderMutation.mutateAsync();
       if (result.type === "order") {
         void navigate({ to: "/order/$orderId/confirmed", params: { orderId: result.orderId } });
       } else {
+        logCheckout("placeOrder:returned-cart-not-order", {
+          cartId: cart.id,
+          paymentIntentId: paymentIntent?.id,
+        });
         setError(
           "Your card was charged, but the order couldn't be finalized automatically — please contact support with your payment confirmation.",
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      logCheckoutError("placeOrder:threw", err, { cartId: cart.id });
+      setError(
+        err instanceof Error
+          ? `Your card may have been charged. ${err.message}`
+          : "Your card may have been charged, but something went wrong finalizing your order — please contact support.",
+      );
     } finally {
       setSubmitting(false);
+      placingOrderRef.current = false;
     }
   };
 
@@ -457,15 +553,28 @@ function FreeOrderSection() {
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => placeOrder(),
+    mutationFn: () => {
+      logCheckout("placeOrder:start (free order)");
+      return placeOrder();
+    },
     onSuccess: (result) => {
+      logCheckout("placeOrder:success (free order)", {
+        resultType: result.type,
+        orderId: result.type === "order" ? result.orderId : undefined,
+      });
       if (result.type === "order") {
         void navigate({ to: "/order/$orderId/confirmed", params: { orderId: result.orderId } });
       } else {
         setError("Couldn't finalize the order — please try again.");
       }
     },
+    // No Stripe charge is involved for a $0 order, so unlike the paid
+    // checkout path there's no "you were charged" risk in refetching the
+    // cart here — if this failed because the cart was already completed
+    // by a concurrent request, bouncing to /cart via the redirect effect
+    // reflects the true state rather than hiding anything.
     onError: (err) => {
+      logCheckoutError("placeOrder:error (free order)", err);
       setError(err instanceof Error ? err.message : "Something went wrong.");
       void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
     },

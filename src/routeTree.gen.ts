@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CartRouteImport } from './routes/cart'
-import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FreeRouteImport } from './routes/free'
 import { Route as LicenseRouteImport } from './routes/license'
@@ -22,6 +21,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated.checkout'
 import { Route as AuthenticatedMyModelsRouteImport } from './routes/_authenticated.my-models'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
@@ -49,11 +49,6 @@ const AboutRoute = AboutRouteImport.update({
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -95,6 +90,11 @@ const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMyModelsRoute = AuthenticatedMyModelsRouteImport.update({
   id: '/my-models',
@@ -146,7 +146,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
@@ -155,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
@@ -169,7 +169,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
@@ -178,6 +177,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
@@ -194,7 +194,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/free': typeof FreeRoute
   '/license': typeof LicenseRoute
@@ -203,6 +202,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$category': typeof CategoryCategoryRoute
@@ -219,7 +219,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
-    | '/checkout'
     | '/contact'
     | '/free'
     | '/license'
@@ -228,6 +227,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/checkout'
     | '/my-models'
     | '/auth/confirmed'
     | '/category/$category'
@@ -242,7 +242,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
-    | '/checkout'
     | '/contact'
     | '/free'
     | '/license'
@@ -251,6 +250,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/checkout'
     | '/my-models'
     | '/auth/confirmed'
     | '/category/$category'
@@ -266,7 +266,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/cart'
-    | '/checkout'
     | '/contact'
     | '/free'
     | '/license'
@@ -275,6 +274,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/support'
     | '/terms'
+    | '/_authenticated/checkout'
     | '/_authenticated/my-models'
     | '/auth/confirmed'
     | '/category/$category'
@@ -291,7 +291,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
-  CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   FreeRoute: typeof FreeRoute
   LicenseRoute: typeof LicenseRoute
@@ -338,13 +337,6 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -402,6 +394,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/checkout': {
+      id: '/_authenticated/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/my-models': {
       id: '/_authenticated/my-models'
@@ -470,10 +469,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedMyModelsRoute: typeof AuthenticatedMyModelsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedMyModelsRoute: AuthenticatedMyModelsRoute,
 }
 
@@ -485,7 +486,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
-  CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   FreeRoute: FreeRoute,
   LicenseRoute: LicenseRoute,
