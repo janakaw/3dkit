@@ -15,6 +15,7 @@ import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
+import { clearMedusaSession } from "@/lib/medusa/auth";
 import { cartQueryOptions } from "@/lib/medusa/cart-query";
 
 export function SiteHeader() {
@@ -60,6 +61,9 @@ export function SiteHeader() {
   }, []);
 
   const signOut = async () => {
+    // Forget the Medusa customer session along with Supabase's — otherwise
+    // the next person on this browser would inherit the customer cookie.
+    await clearMedusaSession().catch(() => undefined);
     await supabase.auth.signOut();
     setUserName(null);
     await navigate({ to: "/signin", replace: true });

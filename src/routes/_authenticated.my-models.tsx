@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { clearMedusaSession } from "@/lib/medusa/auth";
 import { getProduct, type PolyTier, type Product } from "@/lib/products";
 
 export const Route = createFileRoute("/_authenticated/my-models")({
@@ -97,6 +98,7 @@ function MyModelsPage() {
           <button
             type="button"
             onClick={async () => {
+              await clearMedusaSession().catch(() => undefined);
               await supabase.auth.signOut();
               window.location.href = "/signin";
             }}

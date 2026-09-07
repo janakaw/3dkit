@@ -59,8 +59,8 @@ export const deleteLineItem = createServerFn({ method: "POST", strict: { output:
     cartServer.deleteLineItem(lineId),
   );
 
-// Generic cart-field write — used for billing address + email during
-// checkout (see routes/checkout.tsx). `HttpTypes.StoreUpdateCart` also
+// Generic cart-field write (email, addresses, …). Checkout no longer has
+// a billing step — `prepareCheckout` below sets the email server-side. `HttpTypes.StoreUpdateCart` also
 // covers things like `region_id`/`promo_codes`, but those already have
 // their own narrower wrappers below (`updateCartRegion`, `applyPromotions`)
 // — reach for this one only when nothing more specific fits.
@@ -94,15 +94,44 @@ export const updateCartRegion = createServerFn({ method: "POST", strict: { outpu
     cartServer.updateRegion(countryCode),
   );
 
-// Requires a verified Supabase session — checkout sits behind the
-// `_authenticated` route guard already (see decisions doc, Tier 8), so
-// this is a defense-in-depth check on the server function itself, not the
-// only gate. `requireSupabaseAuth` (see auth-middleware.ts) validates the
-// bearer token the client's `attachSupabaseAuth` middleware already
-// attaches to every server function call (see start.ts) and hands back
-// `context.userId` — the real, server-verified Supabase user id used to
-// record this order against the right shopper (see cart.server.ts's
-// `recordOrderForUser`). Never trust a client-supplied user id for this.
+// Read the signed-in shopper's identity off the server-verified Supabase
+// claims (see auth-middleware.ts). Nothing about who is ordering is ever
+// taken from the client-supplied payload.
+function identityFromContext(context: {
+  claims: unknown;
+  accessToken: string;
+}): cartServer.PlaceOrderInput {
+  const claims = context.claims as Record<string, unknown>;
+  const email = typeof claims["email"] === "string" ? (claims["email"] as string) : "";
+  if (!email) {
+    throw new Error("Signed-in user has no email claim; cannot check out.");
+  }
+  const meta = claims["user_metadata"];
+  const displayName =
+    meta &&
+    typeof meta === "object" &&
+    typeof (meta as Record<string, unknown>)["display_name"] === "string"
+      ? ((meta as Record<string, unknown>)["display_name"] as string)
+      : undefined;
+  return { supabaseAccessToken: context.accessToken, email, displayName };
+}
+
+// Checkout page entry point: session + cart email + payment session in
+// one idempotent call (see cart.server.ts). Requires a verified Supabase
+// session — checkout sits behind `_authenticated` already, so this is
+// defense in depth on the server function itself.
+export const prepareCheckout = createServerFn({ method: "POST", strict: { output: false } })
+  .middleware([requireSupabaseAuth])
+  .validator((data: { providerId: string }) => data)
+  .handler(({ data, context }): Promise<HttpTypes.StoreCart | null> =>
+    cartServer.prepareCheckout(identityFromContext(context), data.providerId),
+  );
+
+// Same identity handling as `prepareCheckout`: the Medusa customer
+// session is established (or confirmed) before completing the cart, so
+// the order carries `customer_id` — see auth.server.ts.
 export const placeOrder = createServerFn({ method: "POST", strict: { output: false } })
   .middleware([requireSupabaseAuth])
-  .handler(({ context }): Promise<PlaceOrderResult> => cartServer.placeOrder(context.userId));
+  .handler(({ context }): Promise<PlaceOrderResult> =>
+    cartServer.placeOrder(identityFromContext(context)),
+  );

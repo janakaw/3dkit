@@ -34,8 +34,16 @@ type WelcomeEmailInput = {
 export async function sendWelcomeEmail({ email, displayName }: WelcomeEmailInput): Promise<void> {
   const from = process.env["RESEND_FROM_EMAIL"];
   if (!from) {
+    console.error("[resend] sendWelcomeEmail: missing RESEND_FROM_EMAIL environment variable");
     throw new Error("Missing RESEND_FROM_EMAIL environment variable.");
   }
+  // Runs in the Cloudflare Worker, so this lands in Cloudflare's own
+  // Workers logs — the durable half, unlike a client-side console.log
+  // that's only visible if devtools happened to be open. This is the
+  // trace that tells us whether the request even reached this server
+  // function at all (as opposed to auth.confirmed.tsx never calling it —
+  // see that file's own logging for the other half of this).
+  console.log("[resend] sendWelcomeEmail: attempting send", { to: email, from });
 
   const name = displayName?.trim() || email.split("@")[0] || email;
 
@@ -58,8 +66,10 @@ export async function sendWelcomeEmail({ email, displayName }: WelcomeEmailInput
   });
 
   if (error) {
+    console.error("[resend] sendWelcomeEmail: Resend API returned an error", { to: email, error });
     throw new Error(`Resend failed to send welcome email to ${email}: ${JSON.stringify(error)}`);
   }
+  console.log("[resend] sendWelcomeEmail: send succeeded", { to: email });
 }
 
 // Minimal escaping — display_name is user-supplied free text that goes

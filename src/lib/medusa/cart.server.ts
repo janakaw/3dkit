@@ -36,11 +36,7 @@ import { sdk } from "./config";
 import { medusaError } from "./errors";
 import { getAuthHeaders, getCartId, removeCartId, setCartId } from "./cookies.server";
 import { getRegion } from "./regions";
-// Both this file and client.server.ts are `.server.ts` modules, so a
-// top-level import here is safe (never reaches the client bundle) — see
-// client.server.ts's own header comment, which only warns against
-// top-level-importing it from a route/loader file.
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { ensureMedusaSession, type EnsureMedusaSessionInput } from "./auth.server";
 
 // A cart can end up marked "completed" server-side even when the client
 // never learns the order succeeded — e.g. `sdk.store.cart.complete()`'s
@@ -74,22 +70,15 @@ function errorDetails(error: unknown): Record<string, unknown> {
   return { value: String(error) };
 }
 
-// A cart-write can lose a completion race two ways: Medusa says the cart
-// is flat-out "already completed" (the original case this self-heal was
-// built for — a dropped/retried response after the backend had already
-// finalized the order), or — the case that slipped through undetected
-// until now — two near-simultaneous `placeOrder()` calls against the same
-// cart (e.g. a double-submit on the "Pay" button) race each other, the
-// winner completes the cart, and the loser gets back a plain HTTP 409
-// Conflict from Medusa. Both are the same underlying situation from the
-// shopper's point of view — this cart is done, stop retrying against it —
-// so both are now treated identically instead of the 409 falling through
-// as a raw, unhandled "[409 Conflict] ..." error.
+// Only the genuine "Cart ... is already completed" error triggers the
+// self-heal. It used to also match any HTTP 409, which turned out to be
+// Medusa's generic CONFLICT wrapper for "the completion transaction never
+// finished" — a completely different situation, in which the cart must
+// NOT be discarded because the shopper's card has already been held
+// against it (decisions doc, Tiers 12–13). `placeOrder` below handles
+// that case itself; this helper is for the cart-*write* paths only.
 function isCartCompletedError(error: unknown): boolean {
-  return (
-    error instanceof FetchError &&
-    (error.status === 409 || /already completed/i.test(error.message))
-  );
+  return error instanceof FetchError && /already completed/i.test(error.message);
 }
 
 function withCompletedCartRecovery(error: unknown): never {
@@ -97,7 +86,7 @@ function withCompletedCartRecovery(error: unknown): never {
     logCart("completed-cart self-heal triggered", errorDetails(error));
     removeCartId();
     throw new Error(
-      "Your cart session had already been completed. It's been reset — please try again.",
+      "That cart had already been turned into an order. Start a fresh cart and try again.",
     );
   }
   logCart("unhandled cart error", errorDetails(error));
@@ -254,6 +243,55 @@ export async function initiatePaymentSession(
     .catch(withCompletedCartRecovery);
 }
 
+/**
+ * Everything checkout needs before the card form can show, in one
+ * idempotent call. There is no billing-details step: Medusa needs no
+ * address to complete a cart (digital goods — no shipping, and the
+ * default tax provider ignores addresses), and Stripe's CardElement
+ * collects the postal code itself. What Medusa *does* need is an email
+ * and a customer on the cart, and a pending payment session to hand the
+ * browser a client secret. So:
+ *
+ *   1. establish the Medusa customer session (also hands a guest cart to
+ *      the customer, which stamps `customer_id` + `email` on it);
+ *   2. make sure the cart carries the account's email — a cart created
+ *      before sign-in only gets one via the transfer, and a cart whose
+ *      email drifted (older billing form) is corrected to the account;
+ *   3. if the total is > 0 and there is no pending Stripe session yet,
+ *      start one.
+ *
+ * Safe to call on every checkout page load: nothing here charges or
+ * holds the card, and a pending session is reused rather than re-created.
+ */
+export async function prepareCheckout(
+  input: EnsureMedusaSessionInput,
+  providerId: string,
+): Promise<HttpTypes.StoreCart | null> {
+  await ensureMedusaSession(input);
+
+  let cart = await retrieveCart();
+  if (!cart || (cart.items?.length ?? 0) === 0) return cart;
+
+  if (cart.email !== input.email) {
+    logCart("prepareCheckout: setting cart email from account", { cartId: cart.id });
+    cart = await updateCart({ email: input.email });
+  }
+
+  const hasPendingSession = cart.payment_collection?.payment_sessions?.some(
+    (s) => s.status === "pending",
+  );
+  if ((cart.total ?? 0) > 0 && !hasPendingSession) {
+    logCart("prepareCheckout: initiating payment session", { cartId: cart.id, total: cart.total });
+    const payment_collection = await initiatePaymentSession(
+      cart.id,
+      cart.payment_collection?.id,
+      providerId,
+    );
+    cart = { ...cart, payment_collection };
+  }
+  return cart;
+}
+
 export async function applyPromotions(codes: string[]): Promise<HttpTypes.StoreCart> {
   const cartId = getCartId();
   if (!cartId) {
@@ -277,95 +315,109 @@ export async function updateRegion(countryCode: string): Promise<HttpTypes.Store
 }
 
 export type PlaceOrderResult =
-  { type: "order"; orderId: string } | { type: "cart"; cart: HttpTypes.StoreCart };
+  | { type: "order"; orderId: string }
+  // Card is held, order not yet confirmed. The cart is intact and the
+  // authorisation is reusable, so the shopper should NOT re-enter a card.
+  | { type: "pending"; message: string }
+  // Medusa returned the cart with a payment error attached (e.g. the
+  // session needs more action). The card was not charged.
+  | { type: "cart"; cart: HttpTypes.StoreCart };
 
-// Bookkeeping-only: records that this Supabase-authenticated shopper
-// placed this Medusa order, via the service-role client (bypasses RLS —
-// see the `order_records` migration's header comment for why writes are
-// restricted to the server this way). Called only after Medusa has
-// already, genuinely created the order — never anything this can affect
-// the outcome of a real purchase, which is why every caller of this
-// treats a failure here as log-and-continue, not a thrown error.
+// Medusa's store complete route throws a bare CONFLICT (surfaced as a 409
+// with a canned "Idempotency-Key" message) whenever completeCartWorkflow's
+// transaction ends in a non-terminal state — no competing request is
+// involved; see decisions doc Tiers 12–13. On the in-memory workflow
+// engine this happens when the workflow's parallel step group races its
+// own checkpoint storage, and it leaves the transaction stalled mid-flight.
 //
-// `.from("order_records")` is cast through `any` because `order_records`
-// isn't in the generated `Database` type yet — `types.ts` is regenerated
-// from the user's own `supabase gen types typescript --linked` after the
-// migration is applied (same flow as every other Supabase schema change
-// in this project, see decisions doc, Tier 6). Narrow, disclosed cast;
-// safe to tighten once that regeneration has happened.
-async function recordOrderForUser(
-  userId: string,
-  order: HttpTypes.StoreOrder,
-): Promise<void> {
-  const row = {
-    user_id: userId,
-    medusa_order_id: order.id,
-    email: order.email ?? null,
-    total: order.total ?? null,
-    currency_code: order.currency_code ?? null,
-  };
-  const { error } = await (supabaseAdmin.from as (table: string) => {
-    insert: (values: typeof row) => Promise<{ error: { message: string } | null }>;
-  })("order_records").insert(row);
-  if (error) {
-    throw new Error(`order_records insert failed: ${error.message}`);
-  }
+// Do NOT retry a 409 (tried on 6 Sept, decisions doc Tier 13 follow-up):
+// the stalled transaction still holds the cart's lock for up to two
+// minutes, so a retry blocks in acquireLockStep for 30s and comes back as
+// an API Gateway timeout — a worse experience than reporting "pending" at
+// once. And even after the lock expires, a re-run finds the order already
+// created and skips the branch that authorises payment, so the shopper
+// would land on a confirmation page for an order Medusa will never charge
+// for. The stall has to be fixed where it happens (Redis workflow engine);
+// here we just tell the truth quickly and leave cart and hold intact.
+function isNonTerminalCompletion(error: unknown): boolean {
+  return error instanceof FetchError && error.status === 409;
 }
 
-// `userId` comes from `requireSupabaseAuth` middleware (see cart.ts) —
-// verified server-side against the shopper's real Supabase session, never
-// client-supplied. Checkout sits behind the `_authenticated` route guard
-// (see decisions doc, Tier 8), so a valid session is always expected here
-// in practice; if the token has expired/gone invalid mid-checkout, the
-// middleware rejects the call before this function is even entered — the
-// same "your card may have been charged, contact support" path checkout
-// already shows for any other placeOrder() failure (see Tier 9) handles
-// that case with no special-casing needed here.
-export async function placeOrder(userId: string): Promise<PlaceOrderResult> {
+export type PlaceOrderInput = EnsureMedusaSessionInput;
+
+/**
+ * Finalise the cart into an order. The card has already been *authorised*
+ * (held) in the browser by this point — never captured; capture happens
+ * on the Medusa side once `order.placed` fires (see the backend's
+ * capture-on-order-placed subscriber). So nothing here can take money,
+ * and nothing here should ever discard the cart: a failure leaves a hold
+ * that expires on its own, and a retry reuses the same authorisation.
+ *
+ * Guest orders are refused at three layers (decisions doc, Tier 13); this
+ * is the outermost — a Medusa customer session is established (or
+ * confirmed) before the completion call, so the cart is completed *as*
+ * that customer and the order carries `customer_id`.
+ */
+export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const cartId = getCartId();
   if (!cartId) {
     logCart("placeOrder called with no cart id in cookie");
     throw new Error("No existing cart found when placing an order");
   }
 
-  logCart("placeOrder: completing cart", { cartId, userId });
+  let session = await ensureMedusaSession(input);
+  logCart("placeOrder: completing cart", { cartId, customerId: session.customerId });
 
-  const authHeaders = getAuthHeaders();
-  const cartRes = await sdk.store.cart
-    .complete(cartId, {}, authHeaders)
-    .then((res) => {
-      logCart("placeOrder: cart.complete resolved", { cartId, resultType: res.type });
-      return res;
-    })
-    .catch((error: unknown) => {
-      logCart("placeOrder: cart.complete rejected", { cartId, ...errorDetails(error) });
-      return withCompletedCartRecovery(error);
-    });
-
-  if (cartRes.type === "order") {
-    logCart("placeOrder: order created", { cartId, orderId: cartRes.order.id });
-    removeCartId();
+  // At most two passes: the second exists only for a Medusa session that
+  // expired between page load and "Place order" (401 → re-exchange once).
+  let reExchanged = false;
+  for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      await recordOrderForUser(userId, cartRes.order);
-      logCart("placeOrder: order recorded against user", { orderId: cartRes.order.id, userId });
-    } catch (error) {
-      // The real order already succeeded in Medusa — a bookkeeping
-      // failure here must never surface as a failed checkout. Logged with
-      // full detail so a missing order_records row can still be diagnosed
-      // and backfilled manually if it ever happens.
-      logCart("placeOrder: failed to record order against user (order itself succeeded)", {
+      const res = await sdk.store.cart.complete(cartId, {}, getAuthHeaders());
+      logCart("placeOrder: cart.complete resolved", { cartId, attempt, resultType: res.type });
+
+      if (res.type === "order") {
+        logCart("placeOrder: order created", { cartId, orderId: res.order.id });
+        removeCartId();
+        return { type: "order", orderId: res.order.id };
+      }
+
+      logCart("placeOrder: cart.complete returned a cart, not an order", {
         cartId,
-        orderId: cartRes.order.id,
-        userId,
-        ...errorDetails(error),
+        cartPaymentStatus: res.cart.payment_collection?.status,
       });
+      return { type: "cart", cart: res.cart };
+    } catch (error) {
+      const details = errorDetails(error);
+
+      // Medusa session expired between page load and "Place order":
+      // exchange once and go again.
+      if (error instanceof FetchError && error.status === 401 && !reExchanged) {
+        logCart("placeOrder: Medusa session rejected — re-exchanging", { cartId });
+        reExchanged = true;
+        session = await ensureMedusaSession(input, { force: true });
+        continue;
+      }
+
+      if (isNonTerminalCompletion(error)) {
+        logCart("placeOrder: completion stalled (non-terminal transaction)", {
+          cartId,
+          ...details,
+        });
+        return {
+          type: "pending",
+          message:
+            "Your payment is authorised but the order hasn't been confirmed. " +
+            "You have not been charged, and the hold on your card will clear on its own. " +
+            "Please contact support and we'll finish the order for you — don't pay again.",
+        };
+      }
+
+      logCart("placeOrder: cart.complete rejected", { cartId, attempt, ...details });
+      return medusaError(error);
     }
-    return { type: "order", orderId: cartRes.order.id };
   }
 
-  logCart("placeOrder: cart.complete returned a cart, not an order (payment likely incomplete)", {
-    cartId,
-    cartPaymentStatus: cartRes.cart.payment_collection?.status,
-  });
-  return { type: "cart", cart: cartRes.cart };
+  // Reached only if the re-exchange pass also hit a 401.
+  throw new Error("Could not establish a customer session with the store. Please sign in again.");
 }

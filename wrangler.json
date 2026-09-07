@@ -18,5 +18,12 @@
       "pattern": "www.3dlounge.co",
       "custom_domain": true
     }
-  ]
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://wyitnjxgsdmfnebumhhl.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_45DuAYDON0TGxpYmyLwBIQ_s9rO3EHY",
+    "RESEND_FROM_EMAIL": "welcome@3dkit.co",
+    "MEDUSA_BACKEND_URL": "https://api.3dlounge.co",
+    "MEDUSA_PUBLISHABLE_KEY": "pk_761a6947a48fbff896a9a9c6fb3799ca12cc1ec69f5d8338fce0e710fec1a0e8"
+  }
 }

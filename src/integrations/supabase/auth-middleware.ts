@@ -103,6 +103,10 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
         supabase,
         userId: data.claims.sub,
         claims: data.claims,
+        // The raw Supabase access token, so a server function can present
+        // it to the Medusa backend's `supabase` auth provider and exchange
+        // it for a Medusa customer session (see lib/medusa/auth.server.ts).
+        accessToken: token,
       },
     });
   },

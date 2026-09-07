@@ -30,7 +30,7 @@ import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
 import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
-import { Route as OrderOrderIdConfirmedRouteImport } from './routes/order.$orderId.confirmed'
+import { Route as AuthenticatedOrderOrderIdConfirmedRouteImport } from './routes/_authenticated.order.$orderId.confirmed'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -136,11 +136,12 @@ const SubscribePlanRoute = SubscribePlanRouteImport.update({
   path: '/subscribe/$plan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderOrderIdConfirmedRoute = OrderOrderIdConfirmedRouteImport.update({
-  id: '/order/$orderId/confirmed',
-  path: '/order/$orderId/confirmed',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedOrderOrderIdConfirmedRoute =
+  AuthenticatedOrderOrderIdConfirmedRouteImport.update({
+    id: '/order/$orderId/confirmed',
+    path: '/order/$orderId/confirmed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -163,7 +164,7 @@ export interface FileRoutesByFullPath {
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
-  '/order/$orderId/confirmed': typeof OrderOrderIdConfirmedRoute
+  '/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -186,7 +187,7 @@ export interface FileRoutesByTo {
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
-  '/order/$orderId/confirmed': typeof OrderOrderIdConfirmedRoute
+  '/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -211,7 +212,7 @@ export interface FileRoutesById {
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
-  '/order/$orderId/confirmed': typeof OrderOrderIdConfirmedRoute
+  '/_authenticated/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -283,7 +284,7 @@ export interface FileRouteTypes {
     | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
-    | '/order/$orderId/confirmed'
+    | '/_authenticated/order/$orderId/confirmed'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -306,7 +307,6 @@ export interface RootRouteChildren {
   PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SubscribePlanRoute: typeof SubscribePlanRoute
-  OrderOrderIdConfirmedRoute: typeof OrderOrderIdConfirmedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -458,12 +458,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscribePlanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order/$orderId/confirmed': {
-      id: '/order/$orderId/confirmed'
+    '/_authenticated/order/$orderId/confirmed': {
+      id: '/_authenticated/order/$orderId/confirmed'
       path: '/order/$orderId/confirmed'
       fullPath: '/order/$orderId/confirmed'
-      preLoaderRoute: typeof OrderOrderIdConfirmedRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedOrderOrderIdConfirmedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -471,11 +471,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedMyModelsRoute: typeof AuthenticatedMyModelsRoute
+  AuthenticatedOrderOrderIdConfirmedRoute: typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedMyModelsRoute: AuthenticatedMyModelsRoute,
+  AuthenticatedOrderOrderIdConfirmedRoute:
+    AuthenticatedOrderOrderIdConfirmedRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -501,7 +504,6 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentSuccessRoute: PaymentSuccessRoute,
   ProductSlugRoute: ProductSlugRoute,
   SubscribePlanRoute: SubscribePlanRoute,
-  OrderOrderIdConfirmedRoute: OrderOrderIdConfirmedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { HttpTypes } from "@medusajs/types";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { formatPrice } from "@/lib/catalog";
-import { supabase } from "@/integrations/supabase/client";
-import { initiatePaymentSession, placeOrder, updateCart } from "@/lib/medusa/cart";
+import { placeOrder, prepareCheckout } from "@/lib/medusa/cart";
 import { CART_QUERY_KEY, cartQueryOptions } from "@/lib/medusa/cart-query";
 import { getStripe } from "@/lib/medusa/stripe";
 
@@ -47,26 +46,6 @@ export const Route = createFileRoute("/_authenticated/checkout")({
   component: CheckoutPage,
 });
 
-type BillingFormState = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  address1: string;
-  city: string;
-  province: string;
-  postalCode: string;
-};
-
-const emptyBillingForm: BillingFormState = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  address1: "",
-  city: "",
-  province: "",
-  postalCode: "",
-};
-
 function CheckoutPage() {
   const initialCart = Route.useLoaderData();
   const navigate = useNavigate();
@@ -75,7 +54,7 @@ function CheckoutPage() {
 
   // Nothing to check out — most likely a direct link visit, or the cart
   // was emptied in another tab. Bounce back rather than showing a blank
-  // billing form for an empty order.
+  // payment form for an empty order.
   useEffect(() => {
     // `cart` can be `null` outright (no cart cookie at all — a direct
     // link visit) as well as a real cart with zero items; both mean
@@ -89,103 +68,47 @@ function CheckoutPage() {
     }
   }, [cart, navigate]);
 
-  const [billing, setBilling] = useState<BillingFormState>(emptyBillingForm);
-
-  // Prefill the email from the shopper's 3Dkit account (Supabase auth — a
-  // separate identity system from Medusa's own customer/guest-checkout
-  // model, see decisions doc). Checkout now sits behind `_authenticated`
-  // (see decisions doc, "block purchase without sign-up"), so a user is
-  // always present here — this fetch is just to read the email, not to
-  // gate anything itself. Medusa's own order creation still doesn't
-  // require an authenticated Medusa customer; the two identity systems
-  // remain unlinked beyond this prefill.
-  useEffect(() => {
-    let active = true;
-    void supabase.auth.getUser().then(({ data }) => {
-      const email = data.user?.email;
-      if (active && email) {
-        setBilling((current) => (current.email ? current : { ...current, email }));
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const billingMutation = useMutation({
-    mutationFn: updateCart,
-    onSuccess: (updated) => {
-      logCheckout("billing:success", { cartId: updated.id, total: updated.total });
-      queryClient.setQueryData(CART_QUERY_KEY, updated);
+  // No billing-details step: Medusa needs no address to complete a cart
+  // of digital goods, and Stripe's CardElement collects the postal code
+  // itself. `prepareCheckout` (cart.server.ts) does the rest server-side
+  // — Medusa customer session, cart email from the account, and a
+  // pending Stripe payment session — in one idempotent call, so it simply
+  // runs once per cart as the page mounts and the card form appears when
+  // it returns.
+  const prepareMutation = useMutation({
+    mutationFn: () => prepareCheckout({ data: { providerId: STRIPE_PROVIDER_ID } }),
+    onSuccess: (prepared) => {
+      logCheckout("prepare:success", {
+        cartId: prepared?.id,
+        total: prepared?.total,
+        sessionCount: prepared?.payment_collection?.payment_sessions?.length ?? 0,
+      });
+      queryClient.setQueryData(CART_QUERY_KEY, prepared);
     },
     // A cart the backend has already marked completed (see
-    // cart.server.ts's completed-cart self-heal — the cookie gets
-    // cleared as part of the failure) will otherwise keep failing every
-    // retry with the same error forever, since nothing here re-reads the
-    // cart. Refetching picks up the now-`null` cart, which sends the
-    // shopper back to `/cart` via the effect above.
+    // cart.server.ts's completed-cart self-heal — the cookie gets cleared
+    // as part of the failure) would otherwise sit here forever. Refetching
+    // picks up the now-`null` cart, which sends the shopper back to
+    // `/cart` via the effect above.
     onError: (error) => {
-      logCheckoutError("billing:error", error);
+      logCheckoutError("prepare:error", error);
       void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
     },
   });
+  const preparedForCartRef = useRef<string | null>(null);
+  const cartId = cart?.id;
+  const hasItems = (cart?.items?.length ?? 0) > 0;
+  useEffect(() => {
+    if (!cartId || !hasItems || preparedForCartRef.current === cartId) return;
+    preparedForCartRef.current = cartId;
+    logCheckout("prepare:start", { cartId });
+    prepareMutation.mutate();
+    // `prepareMutation` is stable enough for this purpose (TanStack Query
+    // keeps `mutate` referentially stable); listing it would re-run on
+    // every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartId, hasItems]);
 
-  const paymentSessionMutation = useMutation({
-    mutationFn: initiatePaymentSession,
-    // `initiatePaymentSession` returns a payment collection, not a cart
-    // (see cart.server.ts) — merge it into the shared cart cache rather
-    // than doing a separate `retrieveCart()` round trip to pick it up.
-    onSuccess: (paymentCollection) => {
-      logCheckout("payment-session:success", {
-        paymentCollectionId: paymentCollection.id,
-        sessionCount: paymentCollection.payment_sessions?.length ?? 0,
-      });
-      queryClient.setQueryData<HttpTypes.StoreCart | null | undefined>(CART_QUERY_KEY, (old) =>
-        old ? { ...old, payment_collection: paymentCollection } : old,
-      );
-    },
-    onError: (error) => {
-      logCheckoutError("payment-session:error", error);
-      void queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
-    },
-  });
-
-  const handleBillingSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    logCheckout("billing:submit", { email: billing.email });
-    const updated = await billingMutation.mutateAsync({
-      data: {
-        email: billing.email,
-        billing_address: {
-          first_name: billing.firstName,
-          last_name: billing.lastName,
-          address_1: billing.address1,
-          city: billing.city,
-          province: billing.province,
-          postal_code: billing.postalCode,
-          country_code: "us",
-        },
-      },
-    });
-    // A cart can total $0 after a fully-discounting promo code — Medusa's
-    // own cart-completion workflow skips payment entirely in that case
-    // (see decisions doc: `validateCartPaymentsStep`'s `canSkipPayment`),
-    // so there's no payment session to initiate.
-    if ((updated.total ?? 0) > 0) {
-      logCheckout("payment-session:init", { cartId: updated.id, total: updated.total });
-      paymentSessionMutation.mutate({
-        data: {
-          cartId: updated.id,
-          paymentCollectionId: updated.payment_collection?.id,
-          providerId: STRIPE_PROVIDER_ID,
-        },
-      });
-    } else {
-      logCheckout("payment-session:skipped-zero-total", { cartId: updated.id });
-    }
-  };
-
-  const billingSaved = Boolean(cart?.email && cart?.billing_address?.address_1);
   const activeSession = cart?.payment_collection?.payment_sessions?.find(
     (s) => s.status === "pending",
   );
@@ -202,130 +125,29 @@ function CheckoutPage() {
 
         <div className="mt-8 grid gap-10 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-border p-6">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Billing details
-              </h2>
-              <form
-                onSubmit={(e) => void handleBillingSubmit(e)}
-                className="mt-4 grid gap-4 sm:grid-cols-2"
-              >
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  First name
-                  <input
-                    required
-                    value={billing.firstName}
-                    onChange={(e) => setBilling((b) => ({ ...b, firstName: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  Last name
-                  <input
-                    required
-                    value={billing.lastName}
-                    onChange={(e) => setBilling((b) => ({ ...b, lastName: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground sm:col-span-2">
-                  Email
-                  <input
-                    required
-                    type="email"
-                    value={billing.email}
-                    onChange={(e) => setBilling((b) => ({ ...b, email: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground sm:col-span-2">
-                  Address
-                  <input
-                    required
-                    value={billing.address1}
-                    onChange={(e) => setBilling((b) => ({ ...b, address1: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  City
-                  <input
-                    required
-                    value={billing.city}
-                    onChange={(e) => setBilling((b) => ({ ...b, city: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  State
-                  <input
-                    required
-                    value={billing.province}
-                    onChange={(e) => setBilling((b) => ({ ...b, province: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  ZIP code
-                  <input
-                    required
-                    value={billing.postalCode}
-                    onChange={(e) => setBilling((b) => ({ ...b, postalCode: e.target.value }))}
-                    className="rounded-md border border-border bg-transparent px-3 py-2"
-                  />
-                </label>
-                {/* Single-region store (US only, confirmed against the
-                    live Store API — see decisions doc) — no country
-                    selector needed until a second region exists. */}
-                <label className="flex flex-col gap-1 text-sm text-foreground">
-                  Country
-                  <input
-                    disabled
-                    value="United States"
-                    className="rounded-md border border-border bg-secondary px-3 py-2 text-muted-foreground"
-                  />
-                </label>
-
-                {billingMutation.isError && (
-                  <p className="text-sm text-destructive sm:col-span-2">
-                    {billingMutation.error instanceof Error
-                      ? billingMutation.error.message
-                      : "Failed to save billing details."}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={billingMutation.isPending}
-                  className="mt-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold uppercase tracking-wide text-brand-foreground disabled:opacity-60 sm:col-span-2"
-                >
-                  {billingMutation.isPending
-                    ? "Saving…"
-                    : billingSaved
-                      ? "Update billing details"
-                      : "Continue to payment"}
-                </button>
-              </form>
-            </section>
-
-            {billingSaved && cart && total > 0 && (
+            {cart && total > 0 && (
               <section className="rounded-2xl border border-border p-6">
                 <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Payment
                 </h2>
+                {cart.email && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Receipt will be sent to <span className="text-foreground">{cart.email}</span>
+                  </p>
+                )}
                 {clientSecret ? (
                   <PaymentSection cart={cart} clientSecret={clientSecret} />
                 ) : (
                   <p className="mt-4 text-sm text-muted-foreground">
-                    {paymentSessionMutation.isError
-                      ? "Couldn't start the payment — try updating your billing details again."
+                    {prepareMutation.isError
+                      ? "Couldn't start the payment — please reload the page to try again."
                       : "Preparing payment…"}
                   </p>
                 )}
               </section>
             )}
 
-            {billingSaved && cart && total <= 0 && <FreeOrderSection />}
+            {cart && total <= 0 && <FreeOrderSection />}
           </div>
 
           <aside className="h-fit rounded-2xl bg-secondary p-6">
@@ -419,10 +241,10 @@ function StripeCardForm({
         orderId: result.type === "order" ? result.orderId : undefined,
       });
     },
-    // [fix] Deliberately NOT invalidating/refetching the cart query here
-    // (unlike the billing/payment-session mutations above). By the time
-    // this mutation can fail, Stripe has already charged the card — this
-    // is the one error in the whole flow that happens *after* payment.
+    // Deliberately NOT invalidating/refetching the cart query here
+    // (unlike the prepare mutation above). By the time
+    // this mutation can fail the card is already *held* against this
+    // cart, and the cart must survive so a retry reuses that hold.
     // The old behavior invalidated the cart query on any error, which
     // (via cart.server.ts's completed-cart self-heal on `retrieveCart()`)
     // could resolve the cart to `null`, which triggers checkout's own
@@ -460,17 +282,10 @@ function StripeCardForm({
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card,
-          billing_details: {
-            name: `${cart.billing_address?.first_name ?? ""} ${cart.billing_address?.last_name ?? ""}`.trim(),
-            email: cart.email ?? null,
-            address: {
-              city: cart.billing_address?.city ?? null,
-              country: cart.billing_address?.country_code ?? null,
-              line1: cart.billing_address?.address_1 ?? null,
-              postal_code: cart.billing_address?.postal_code ?? null,
-              state: cart.billing_address?.province ?? null,
-            },
-          },
+          // No billing address is collected (see the page comment above);
+          // the CardElement supplies the postal code with the card, and
+          // the email lets Stripe attach its receipt/fraud signals.
+          billing_details: { email: cart.email ?? null },
         },
       });
 
@@ -489,29 +304,33 @@ function StripeCardForm({
         return;
       }
 
-      // Card charged (or authorized) successfully — now actually finalize
-      // the Medusa order. If this fails, the charge has still gone
-      // through on Stripe's side, so the message below says so rather
-      // than implying nothing happened.
+      // The card is now *held* (authorise-only — see decisions doc, Tier
+      // 13), not charged. Capture happens on the Medusa side only after
+      // the order exists, so nothing below can take money, and nothing
+      // below discards the cart: a retry reuses the same authorisation.
       logCheckout("placeOrder:start", { cartId: cart.id, paymentIntentId: paymentIntent?.id });
       const result = await placeOrderMutation.mutateAsync();
       if (result.type === "order") {
         void navigate({ to: "/order/$orderId/confirmed", params: { orderId: result.orderId } });
+      } else if (result.type === "pending") {
+        logCheckout("placeOrder:pending", { cartId: cart.id, paymentIntentId: paymentIntent?.id });
+        setError(result.message);
       } else {
         logCheckout("placeOrder:returned-cart-not-order", {
           cartId: cart.id,
           paymentIntentId: paymentIntent?.id,
+          paymentStatus: result.cart.payment_collection?.status,
         });
         setError(
-          "Your card was charged, but the order couldn't be finalized automatically — please contact support with your payment confirmation.",
+          "We couldn't confirm your payment. You have not been charged — please check your card details and try again.",
         );
       }
     } catch (err) {
       logCheckoutError("placeOrder:threw", err, { cartId: cart.id });
       setError(
         err instanceof Error
-          ? `Your card may have been charged. ${err.message}`
-          : "Your card may have been charged, but something went wrong finalizing your order — please contact support.",
+          ? `You have not been charged (a temporary hold on your card will clear on its own). ${err.message}`
+          : "You have not been charged, but something went wrong confirming your order — please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -537,7 +356,7 @@ function StripeCardForm({
         disabled={!stripe || !cardComplete || submitting}
         className="mt-5 w-full rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground disabled:opacity-60"
       >
-        {submitting ? "Placing order…" : `Pay ${formatPrice(cart.total ?? 0)}`}
+        {submitting ? "Placing order…" : `Place order · ${formatPrice(cart.total ?? 0)}`}
       </button>
     </div>
   );

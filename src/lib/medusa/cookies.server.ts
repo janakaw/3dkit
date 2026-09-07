@@ -12,6 +12,11 @@
  * client/server import-boundary check (route `loader`s are isomorphic by
  * default, so their whole import graph gets bundled for the client too).
  *
+ * `_medusa_jwt` is written by lib/medusa/auth.server.ts after exchanging
+ * the shopper's Supabase session for a Medusa customer JWT (decisions doc,
+ * Tier 13) and cleared on sign-out; `getAuthHeaders()` below turns it into
+ * the `Authorization: Bearer` header every Medusa call sends.
+ *
  * Named `.server.ts`, matching the convention already used by
  * `src/integrations/supabase/client.server.ts`, so this file is excluded
  * from the client bundle entirely. Only call these from inside a
@@ -36,12 +41,27 @@ export function getAuthHeaders(): { authorization: string } | Record<string, nev
   return token ? { authorization: `Bearer ${token}` } : {};
 }
 
-export function setAuthToken(token: string): void {
-  setCookie(AUTH_COOKIE, token, { ...secureCookieOpts, maxAge: WEEK });
+export function getAuthToken(): string | undefined {
+  return getCookie(AUTH_COOKIE);
+}
+
+// `maxAge` defaults to a week but callers that know the token's own
+// expiry (lib/medusa/auth.server.ts decodes `exp` from the Medusa JWT)
+// pass that instead, so the cookie never outlives the token inside it.
+export function setAuthToken(token: string, maxAge: number = WEEK): void {
+  setCookie(AUTH_COOKIE, token, { ...secureCookieOpts, maxAge });
 }
 
 export function removeAuthToken(): void {
-  deleteCookie(AUTH_COOKIE);
+  // Must pass the same attributes used in `setAuthToken` above (minus
+  // `maxAge`, which `deleteCookie` overrides to 0 itself). Cookies are
+  // technically keyed by name+domain+path only, so this shouldn't be
+  // strictly required to override the original cookie — but omitting
+  // `sameSite`/`secure` here was the leading theory (unconfirmed) behind a
+  // production case where a self-heal's cookie clear silently failed to
+  // take effect in the browser, requiring the shopper to clear cookies
+  // manually. Passing matching attributes removes that variable entirely.
+  deleteCookie(AUTH_COOKIE, secureCookieOpts);
 }
 
 export function getCartId(): string | undefined {
@@ -53,5 +73,6 @@ export function setCartId(cartId: string): void {
 }
 
 export function removeCartId(): void {
-  deleteCookie(CART_ID_COOKIE);
+  // See the comment in `removeAuthToken` above — same reasoning applies.
+  deleteCookie(CART_ID_COOKIE, secureCookieOpts);
 }

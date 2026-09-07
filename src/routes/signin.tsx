@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureMedusaSession } from "@/lib/medusa/auth";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
@@ -49,6 +50,14 @@ function SignInPage() {
   // under `exactOptionalPropertyTypes` — `{ href }` and `{ to }` aren't the
   // same options shape.
   const goToRedirectOrMyModels = async () => {
+    // Establish the Medusa customer session (creating the customer on
+    // first sign-in) and hand over any guest cart, before landing on the
+    // page the shopper was heading to — see lib/medusa/auth.server.ts.
+    try {
+      await ensureMedusaSession();
+    } catch (error) {
+      console.warn("[signin] could not establish Medusa customer session", error);
+    }
     if (redirectTarget) {
       await navigate({ href: redirectTarget });
     } else {

@@ -4,13 +4,14 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { formatPrice } from "@/lib/catalog";
 import { retrieveOrder } from "@/lib/medusa/orders";
 
-export const Route = createFileRoute("/order/$orderId/confirmed")({
+export const Route = createFileRoute("/_authenticated/order/$orderId/confirmed")({
   head: () => ({
     meta: [{ title: "Order confirmed — 3Dkit" }, { name: "robots", content: "noindex" }],
   }),
-  // Guest-accessible by design — see orders.server.ts's header comment on
-  // why retrieving a single order by id doesn't require the shopper to be
-  // signed in as a Medusa customer, unlike listing orders.
+  // Under `_authenticated` (decisions doc, Tier 13): orders belong to
+  // signed-in customers, and `retrieveOrder` only returns an order that
+  // belongs to the caller. The layout is `ssr: false`, which also keeps
+  // this loader on the client where the Supabase session lives.
   loader: async ({ params }) => {
     const order = await retrieveOrder({ data: params.orderId });
     if (!order) throw notFound();

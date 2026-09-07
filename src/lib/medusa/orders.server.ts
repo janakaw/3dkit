@@ -1,27 +1,59 @@
 /**
  * Order lookup for the post-checkout confirmation page.
  *
- * Cookie-dependent (passes along the auth token if the shopper is signed
- * in as a Medusa customer), so this stays `.server.ts` — see
- * cookies.server.ts's header comment. Ported from
- * 3dchairstore-storefront/src/lib/data/orders.ts, trimmed to just
- * `retrieveOrder`: `listOrders` belongs to an account/order-history page,
- * which isn't part of this porting step.
+ * Orders belong to Medusa customers (decisions doc, Tier 13 — guest
+ * orders are prohibited), so reading one requires the signed-in shopper's
+ * Medusa customer session and the order must be theirs. Two checks, both
+ * server-side: the Medusa backend's own `authenticate("customer")`
+ * middleware on `/store/orders*` refuses anonymous reads outright, and
+ * this function additionally compares the order's `customer_id` to the
+ * customer in the session cookie before returning anything — so a valid
+ * session cannot read somebody else's order by id.
  *
- * Retrieving a single order by id is intentionally allowed for guests too
- * (unlike listing orders, which the Medusa Store API scopes to the
- * authenticated customer) — that's what makes a same-request-only
- * "thank you" / order confirmation page possible right after a guest
- * checkout, with no sign-in required.
+ * Cookie-dependent, so `.server.ts` — see cookies.server.ts's header.
  */
 import type { HttpTypes } from "@medusajs/types";
 import { sdk } from "./config";
 import { getAuthHeaders } from "./cookies.server";
+import { ensureMedusaSession, type EnsureMedusaSessionInput } from "./auth.server";
 
-export async function retrieveOrder(orderId: string): Promise<HttpTypes.StoreOrder | null> {
-  const authHeaders = getAuthHeaders();
-  return sdk.store.order
-    .retrieve(orderId, { fields: "*payment_collections.payments,+fulfillment_status" }, authHeaders)
+export async function retrieveOrder(
+  orderId: string,
+  identity: EnsureMedusaSessionInput,
+): Promise<HttpTypes.StoreOrder | null> {
+  const session = await ensureMedusaSession(identity);
+
+  // `customer_id` is NOT in Medusa's default store-order field set, so it
+  // has to be requested explicitly — without `+customer_id` the ownership
+  // check below compares against `undefined` and rejects every order
+  // (found the hard way on 6 Sept: a successful checkout landed on a
+  // "page does not exist"). `+` adds to the defaults; `*` pulls a whole
+  // relation in; neither replaces the default list.
+  const order = await sdk.store.order
+    .retrieve(
+      orderId,
+      { fields: "+customer_id,*payment_collections.payments,+fulfillment_status" },
+      getAuthHeaders(),
+    )
     .then(({ order }) => order)
-    .catch(() => null);
+    .catch((error: unknown) => {
+      console.warn("[orders.server] order read failed", {
+        orderId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    });
+
+  if (!order) return null;
+
+  if (!order.customer_id || order.customer_id !== session.customerId) {
+    console.warn("[orders.server] refused order read: not the caller's order", {
+      orderId,
+      orderCustomerId: order.customer_id ?? null,
+      sessionCustomerId: session.customerId,
+    });
+    return null;
+  }
+
+  return order;
 }

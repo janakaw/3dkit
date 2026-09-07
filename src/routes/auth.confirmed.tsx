@@ -21,9 +21,22 @@ function EmailConfirmedPage() {
   // reliable signal that this exact page load is the result of clicking a
   // signup confirmation link (implicit flow puts `type=signup` in the
   // hash), as opposed to someone just returning to this URL later.
-  const [wasSignupLink] = useState(
-    () => typeof window !== "undefined" && window.location.hash.includes("type=signup"),
-  );
+  const [wasSignupLink] = useState(() => {
+    const isSignup = typeof window !== "undefined" && window.location.hash.includes("type=signup");
+    // [logging] This flag is the single point of failure for the welcome
+    // email ever being attempted at all — if this logs `false` when it
+    // should be `true` (e.g. Supabase's Redirect URLs allow-list rejected
+    // this exact path and fell back to the Site URL instead, so the
+    // confirmation link never actually landed here with `type=signup` in
+    // the hash), `sendWelcomeEmail` is never even called, and nothing
+    // shows up in Resend's logs — indistinguishable from a send failure
+    // without this log line.
+    console.log("[auth/confirmed] page loaded", {
+      wasSignupLink: isSignup,
+      hash: typeof window !== "undefined" ? window.location.hash : undefined,
+    });
+    return isSignup;
+  });
   const welcomeEmailSent = useRef(false);
 
   useEffect(() => {
@@ -32,23 +45,39 @@ function EmailConfirmedPage() {
     const maybeSendWelcomeEmail = (session: {
       user: { email?: string; user_metadata: Record<string, unknown> };
     }) => {
-      if (!wasSignupLink || welcomeEmailSent.current) return;
+      if (!wasSignupLink) {
+        console.log("[auth/confirmed] skipping welcome email — not a signup confirmation link");
+        return;
+      }
+      if (welcomeEmailSent.current) {
+        console.log("[auth/confirmed] skipping welcome email — already sent this page load");
+        return;
+      }
       const email = session.user.email;
-      if (!email) return;
+      if (!email) {
+        console.log("[auth/confirmed] skipping welcome email — session has no email");
+        return;
+      }
       welcomeEmailSent.current = true;
       const displayName = session.user.user_metadata["display_name"];
+      console.log("[auth/confirmed] sending welcome email", { email });
       // Best-effort — a failure here shouldn't block the user from seeing
       // their account is confirmed and working.
       void sendWelcomeEmail({
         data: { email, displayName: typeof displayName === "string" ? displayName : undefined },
-      }).catch((error: unknown) => {
-        console.error("[auth/confirmed] Welcome email failed to send:", error);
-      });
+      })
+        .then(() => {
+          console.log("[auth/confirmed] welcome email server call succeeded", { email });
+        })
+        .catch((error: unknown) => {
+          console.error("[auth/confirmed] Welcome email failed to send:", error);
+        });
     };
 
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!active) return;
+      console.log("[auth/confirmed] getSession result", { hasSession: !!data.session });
       if (data.session) {
         setStatus("confirmed");
         maybeSendWelcomeEmail(data.session);
