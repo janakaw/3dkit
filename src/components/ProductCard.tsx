@@ -66,13 +66,16 @@ export function ProductCard({ product, tier = "high" }: { product: CardProduct; 
         search={tier === "mid" ? { tier: "mid" as const } : {}}
         className="block"
       >
-        <div className="relative aspect-square overflow-hidden bg-secondary">
+        {/* 16:9 frame (site-wide decision, 2026-09-12). Source renders are
+            square, so `object-cover` crops ~22% top/bottom until wide
+            renders exist. */}
+        <div className="relative aspect-video overflow-hidden bg-secondary">
           <img
             src={product.image}
             alt={`${product.name} ${variant.label} 3D model preview`}
             loading="lazy"
             width={1024}
-            height={1024}
+            height={576}
             className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.04] ${
               tier === "mid" ? "saturate-[0.75] contrast-[1.08]" : ""
             }`}

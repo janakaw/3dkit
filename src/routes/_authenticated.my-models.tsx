@@ -179,7 +179,7 @@ function MyModelsPage() {
             </div>
           )}
           {purchased.length > 0 && (
-            <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+            <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {purchased.map(({ entry, product }) => (
                 <li key={entry.line_item_id} className="flex flex-col gap-2">
                   {product ? (
@@ -216,7 +216,7 @@ function MyModelsPage() {
             </p>
           )}
           {!savedLoading && !savedError && saved.length > 0 && (
-            <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {saved.map(({ product, tier }) => (
                 <ProductCard key={`${product.slug}-${tier}`} product={product} tier={tier} />
               ))}

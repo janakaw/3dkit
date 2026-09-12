@@ -110,7 +110,7 @@ function ProductPage() {
     setUnavailable(false);
     addToCartMutation.mutate({ data: { variantId: product.variantId, countryCode: "us" } });
   };
-  const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
+  const related = products.filter((p) => p.slug !== product.slug).slice(0, 3);
 
   // Previously padded out with other products' images as fake extra
   // "views" — besides depending on a Lovable-platform-only asset URL that
@@ -319,7 +319,7 @@ function ProductPage() {
 
         <section className="pt-16">
           <h2 className="text-2xl font-bold text-foreground">You may also like</h2>
-          <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p) => (
               <ProductCard key={p.slug} product={p} tier={tier} />
             ))}
