@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Heart, LogOut, ShoppingBag } from "lucide-react";
+import { DownloadMenu } from "@/components/DownloadMenu";
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
@@ -190,6 +191,7 @@ function MyModelsPage() {
                     Purchased {formatDate(entry.purchased_at)}
                     {entry.order_display_id != null && <> · Order #{entry.order_display_id}</>}
                   </p>
+                  <DownloadMenu lineItemId={entry.line_item_id} compact />
                 </li>
               ))}
             </ul>

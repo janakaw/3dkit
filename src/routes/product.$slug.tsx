@@ -4,10 +4,8 @@ import { useRef, useState } from "react";
 import {
   Box,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Download,
   FileText,
   Grid2x2,
   LifeBuoy,
@@ -27,7 +25,8 @@ import {
 } from "@/lib/catalog";
 import { addToCart } from "@/lib/medusa/cart";
 import { CART_QUERY_KEY } from "@/lib/medusa/cart-query";
-import { libraryQueryOptions, ownsVariant } from "@/lib/medusa/library-query";
+import { libraryEntryForVariant, libraryQueryOptions } from "@/lib/medusa/library-query";
+import { DownloadMenu } from "@/components/DownloadMenu";
 import { useAuthUser } from "@/integrations/supabase/use-auth-user";
 // "Related products" strip below still reads the static mock list
 // directly — that's the listing-page tier of the port, not done yet.
@@ -67,28 +66,11 @@ export const Route = createFileRoute("/product/$slug")({
   component: ProductPage,
 });
 
-const highFormats: Array<[string, string]> = [
-  ["FBX", "184 MB"],
-  ["OBJ", "212 MB"],
-  ["3ds Max (.max)", "236 MB"],
-  ["3ds Max + Corona", "248 MB"],
-  ["3ds Max + V-Ray", "251 MB"],
-  ["Blender (.blend)", "198 MB"],
-];
-
-const midFormats: Array<[string, string]> = [
-  ["Unreal FBX (UE5-ready)", "38 MB"],
-  ["Unity FBX (verified import)", "38 MB"],
-  ["GLB / glTF", "24 MB"],
-  ["OBJ", "31 MB"],
-];
-
 function ProductPage() {
   const { product } = Route.useLoaderData();
   const { tier: searchTier } = Route.useSearch();
   const tier: PolyTier = searchTier === "mid" ? "mid" : "high";
   const variant = getVariant(product, tier);
-  const [openDownload, setOpenDownload] = useState(false);
   // Only for the "no variant to add" edge case (mock mode, or a real
   // product missing a variant id) — the actual add-to-cart request/response
   // lifecycle is tracked by the mutation below, not local state.
@@ -103,7 +85,8 @@ function ProductPage() {
   // nothing, so for them the download stays locked and the cart is open.
   const authUser = useAuthUser();
   const { data: library } = useQuery(libraryQueryOptions(Boolean(authUser)));
-  const owned = ownsVariant(library, product.variantId);
+  const libraryEntry = libraryEntryForVariant(library, product.variantId);
+  const owned = Boolean(libraryEntry);
 
   const addToCartMutation = useMutation({
     mutationFn: addToCart,
@@ -128,7 +111,6 @@ function ProductPage() {
     addToCartMutation.mutate({ data: { variantId: product.variantId, countryCode: "us" } });
   };
   const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
-  const formats = tier === "mid" ? midFormats : highFormats;
 
   // Previously padded out with other products' images as fake extra
   // "views" — besides depending on a Lovable-platform-only asset URL that
@@ -293,38 +275,10 @@ function ProductPage() {
               </button>
             )}
 
-            {/* Download — only once the model is in the shopper's library.
-                This is a convenience gate; the real check is server-side
-                when the signed download link is generated (doc/bugs #8). */}
-            <div className="relative mt-3">
-              <button
-                onClick={() => owned && setOpenDownload((o) => !o)}
-                disabled={!owned}
-                aria-expanded={openDownload}
-                title={owned ? undefined : "Purchase this model to download it"}
-                className="flex w-full items-center justify-between rounded-full border border-brand/50 bg-brand-soft px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand transition-colors hover:bg-brand hover:text-brand-foreground disabled:cursor-not-allowed disabled:border-border disabled:bg-transparent disabled:text-muted-foreground disabled:hover:bg-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Download className="h-4 w-4" aria-hidden />
-                  {owned ? "Download" : "Purchase to download"}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${openDownload ? "rotate-180" : ""}`}
-                  aria-hidden
-                />
-              </button>
-              {openDownload && (
-                <ul className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-                  {formats.map(([f, size]) => (
-                    <li key={f}>
-                      <button className="flex w-full items-center justify-between border-b border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors last:border-0 hover:bg-secondary hover:text-foreground">
-                        <span>{f}</span>
-                        <span className="text-xs text-muted-foreground/70">{size}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            {/* Download — live only once the model is in the shopper's
+                library; the backend re-checks ownership per link. */}
+            <div className="mt-3">
+              <DownloadMenu lineItemId={libraryEntry?.line_item_id} />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-brand-soft px-5 py-5">

@@ -30,3 +30,12 @@ export function ownsVariant(
   if (!variantId || !library) return false;
   return library.some((entry) => entry.variant_id === variantId);
 }
+
+/** The library entry for a variant, if owned — carries the `line_item_id` downloads key on. */
+export function libraryEntryForVariant(
+  library: LibraryEntry[] | undefined,
+  variantId: string | null,
+): LibraryEntry | undefined {
+  if (!variantId || !library) return undefined;
+  return library.find((entry) => entry.variant_id === variantId);
+}

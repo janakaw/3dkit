@@ -8,6 +8,7 @@
  * cookies.server.ts's header.
  */
 import { sdk } from "./config";
+import type { DownloadFormat, DownloadLink } from "./download-formats";
 import { getAuthHeaders } from "./cookies.server";
 import {
   ensureMedusaSession,
@@ -55,4 +56,21 @@ export async function getLibraryForCurrentSession(): Promise<LibraryEntry[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Ask the backend for a download URL for one purchased line item
+ * (doc/bugs #8). The backend re-checks ownership against the order
+ * history before answering — the storefront never decides this itself.
+ */
+export async function getDownloadLink(
+  identity: EnsureMedusaSessionInput,
+  lineItemId: string,
+  format: DownloadFormat,
+): Promise<DownloadLink> {
+  await ensureMedusaSession(identity);
+  return sdk.client.fetch<DownloadLink>(
+    `/store/customers/me/library/${encodeURIComponent(lineItemId)}/download`,
+    { method: "GET", query: { format }, headers: getAuthHeaders() },
+  );
 }
