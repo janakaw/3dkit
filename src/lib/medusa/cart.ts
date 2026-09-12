@@ -26,6 +26,7 @@ import type { HttpTypes } from "@medusajs/types";
 import * as cartServer from "./cart.server";
 import type { PlaceOrderResult } from "./cart.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { identityFromContext } from "./identity";
 
 // POST, not GET, even though this only reads: a same-URL, no-args "GET"
 // server function is an easy target for the browser's default HTTP GET
@@ -93,28 +94,6 @@ export const updateCartRegion = createServerFn({ method: "POST", strict: { outpu
   .handler(({ data: countryCode }): Promise<HttpTypes.StoreCart | null> =>
     cartServer.updateRegion(countryCode),
   );
-
-// Read the signed-in shopper's identity off the server-verified Supabase
-// claims (see auth-middleware.ts). Nothing about who is ordering is ever
-// taken from the client-supplied payload.
-function identityFromContext(context: {
-  claims: unknown;
-  accessToken: string;
-}): cartServer.PlaceOrderInput {
-  const claims = context.claims as Record<string, unknown>;
-  const email = typeof claims["email"] === "string" ? (claims["email"] as string) : "";
-  if (!email) {
-    throw new Error("Signed-in user has no email claim; cannot check out.");
-  }
-  const meta = claims["user_metadata"];
-  const displayName =
-    meta &&
-    typeof meta === "object" &&
-    typeof (meta as Record<string, unknown>)["display_name"] === "string"
-      ? ((meta as Record<string, unknown>)["display_name"] as string)
-      : undefined;
-  return { supabaseAccessToken: context.accessToken, email, displayName };
-}
 
 // Checkout page entry point: session + cart email + payment session in
 // one idempotent call (see cart.server.ts). Requires a verified Supabase

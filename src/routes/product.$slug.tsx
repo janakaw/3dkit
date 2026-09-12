@@ -1,8 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
   Box,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -26,6 +27,8 @@ import {
 } from "@/lib/catalog";
 import { addToCart } from "@/lib/medusa/cart";
 import { CART_QUERY_KEY } from "@/lib/medusa/cart-query";
+import { libraryQueryOptions, ownsVariant } from "@/lib/medusa/library-query";
+import { useAuthUser } from "@/integrations/supabase/use-auth-user";
 // "Related products" strip below still reads the static mock list
 // directly — that's the listing-page tier of the port, not done yet.
 // Only the single-product lookup above is wired to VITE_DATA_SOURCE so far.
@@ -44,7 +47,9 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Model not found — 3Dkit" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [{ title: "Model not found — 3Dkit" }, { name: "robots", content: "noindex" }],
+      };
     }
     const { product } = loaderData;
     const title = `${product.name} — 3D Model | 3Dkit`;
@@ -90,6 +95,16 @@ function ProductPage() {
   const [unavailable, setUnavailable] = useState(false);
 
   const queryClient = useQueryClient();
+
+  // Ownership (doc/bugs #2–4): a model the shopper has already paid for
+  // can't be added to the cart again, and only an owned model can be
+  // downloaded. Derived from the backend's order history via the shared
+  // `["library"]` query (see library-query.ts); signed-out visitors own
+  // nothing, so for them the download stays locked and the cart is open.
+  const authUser = useAuthUser();
+  const { data: library } = useQuery(libraryQueryOptions(Boolean(authUser)));
+  const owned = ownsVariant(library, product.variantId);
+
   const addToCartMutation = useMutation({
     mutationFn: addToCart,
     // Write the mutation's own response straight into the shared cart
@@ -108,6 +123,7 @@ function ProductPage() {
       setUnavailable(true);
       return;
     }
+    if (owned) return;
     setUnavailable(false);
     addToCartMutation.mutate({ data: { variantId: product.variantId, countryCode: "us" } });
   };
@@ -250,31 +266,47 @@ function ProductPage() {
               {formatPrice(variant.price)}
             </p>
 
-            <button
-              onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              <ShoppingCart className="h-4 w-4" aria-hidden />
-              {addToCartMutation.isPending
-                ? "Adding…"
-                : unavailable || addToCartMutation.isError
-                  ? "Couldn't add — try again"
-                  : addToCartMutation.isSuccess
-                    ? "Added to Cart"
-                    : "Add to Cart"}
-            </button>
+            {owned ? (
+              <div
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-secondary px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+                aria-label="Already purchased"
+              >
+                <Check className="h-4 w-4" aria-hidden />
+                In your library
+              </div>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                disabled={addToCartMutation.isPending}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                <ShoppingCart className="h-4 w-4" aria-hidden />
+                {addToCartMutation.isPending
+                  ? "Adding…"
+                  : unavailable || addToCartMutation.isError
+                    ? "Couldn't add — try again"
+                    : addToCartMutation.isSuccess
+                      ? "Added to Cart"
+                      : product.price === 0
+                        ? "Add to Cart — free"
+                        : "Add to Cart"}
+              </button>
+            )}
 
-            {/* Download */}
+            {/* Download — only once the model is in the shopper's library.
+                This is a convenience gate; the real check is server-side
+                when the signed download link is generated (doc/bugs #8). */}
             <div className="relative mt-3">
               <button
-                onClick={() => setOpenDownload((o) => !o)}
+                onClick={() => owned && setOpenDownload((o) => !o)}
+                disabled={!owned}
                 aria-expanded={openDownload}
-                className="flex w-full items-center justify-between rounded-full border border-brand/50 bg-brand-soft px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
+                title={owned ? undefined : "Purchase this model to download it"}
+                className="flex w-full items-center justify-between rounded-full border border-brand/50 bg-brand-soft px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-brand transition-colors hover:bg-brand hover:text-brand-foreground disabled:cursor-not-allowed disabled:border-border disabled:bg-transparent disabled:text-muted-foreground disabled:hover:bg-transparent"
               >
                 <span className="flex items-center gap-2">
                   <Download className="h-4 w-4" aria-hidden />
-                  {product.price === 0 ? "Download free model" : "Download"}
+                  {owned ? "Download" : "Purchase to download"}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${openDownload ? "rotate-180" : ""}`}
@@ -339,7 +371,6 @@ function ProductPage() {
             ))}
           </div>
         </section>
-
       </div>
 
       <SiteFooter />

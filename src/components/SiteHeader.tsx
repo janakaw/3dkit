@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
   Facebook,
@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { clearMedusaSession } from "@/lib/medusa/auth";
 import { cartQueryOptions } from "@/lib/medusa/cart-query";
+import { LIBRARY_QUERY_KEY } from "@/lib/medusa/library-query";
 
 export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
@@ -30,6 +31,7 @@ export function SiteHeader() {
   // once here; if the cart page (or another instance of the header) is
   // already mounted and has fetched, this just reads the shared cache.
   const { data: cart } = useQuery(cartQueryOptions());
+  const queryClient = useQueryClient();
   const cartCount = cart?.items?.length ?? 0;
 
   useEffect(() => {
@@ -65,6 +67,9 @@ export function SiteHeader() {
     // the next person on this browser would inherit the customer cookie.
     await clearMedusaSession().catch(() => undefined);
     await supabase.auth.signOut();
+    // The library is per-person — don't let the next sign-in on this
+    // browser see a cached copy of the previous shopper's purchases.
+    queryClient.removeQueries({ queryKey: LIBRARY_QUERY_KEY });
     setUserName(null);
     await navigate({ to: "/signin", replace: true });
   };

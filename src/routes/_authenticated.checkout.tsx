@@ -7,6 +7,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { formatPrice } from "@/lib/catalog";
 import { placeOrder, prepareCheckout } from "@/lib/medusa/cart";
 import { CART_QUERY_KEY, cartQueryOptions } from "@/lib/medusa/cart-query";
+import { LIBRARY_QUERY_KEY } from "@/lib/medusa/library-query";
 import { getStripe } from "@/lib/medusa/stripe";
 
 // Only one payment provider is configured on the backend right now
@@ -216,6 +217,7 @@ function StripeCardForm({
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [cardComplete, setCardComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -240,6 +242,11 @@ function StripeCardForm({
         resultType: result.type,
         orderId: result.type === "order" ? result.orderId : undefined,
       });
+      // The shopper now owns what was in the cart — refetch the library
+      // so product pages flip to "In your library" (see library-query.ts).
+      if (result.type === "order") {
+        void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+      }
     },
     // Deliberately NOT invalidating/refetching the cart query here
     // (unlike the prepare mutation above). By the time
@@ -382,6 +389,7 @@ function FreeOrderSection() {
         orderId: result.type === "order" ? result.orderId : undefined,
       });
       if (result.type === "order") {
+        void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
         void navigate({ to: "/order/$orderId/confirmed", params: { orderId: result.orderId } });
       } else {
         setError("Couldn't finalize the order — please try again.");

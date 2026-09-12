@@ -37,6 +37,7 @@ import { medusaError } from "./errors";
 import { getAuthHeaders, getCartId, removeCartId, setCartId } from "./cookies.server";
 import { getRegion } from "./regions";
 import { ensureMedusaSession, type EnsureMedusaSessionInput } from "./auth.server";
+import { getLibraryForCurrentSession } from "./library.server";
 
 // A cart can end up marked "completed" server-side even when the client
 // never learns the order succeeded — e.g. `sdk.store.cart.complete()`'s
@@ -159,6 +160,14 @@ export async function addToCart({
 }): Promise<HttpTypes.StoreCart> {
   if (!variantId) {
     throw new Error("Missing variant ID when adding to cart");
+  }
+
+  // Digital goods can't be bought twice (doc/bugs #2). Convenience layer
+  // only — the backend's completeCart validate hook refuses such a cart
+  // regardless of how the line got in.
+  const library = await getLibraryForCurrentSession();
+  if (library.some((entry) => entry.variant_id === variantId)) {
+    throw new Error("This model is already in your library.");
   }
 
   const cart = await getOrSetCart(countryCode);

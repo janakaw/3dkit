@@ -75,7 +75,10 @@ function secondsRemaining(payload: MedusaJwt | null): number | undefined {
   return remaining > 0 ? remaining : undefined;
 }
 
-function splitName(displayName: string | undefined, email: string): {
+function splitName(
+  displayName: string | undefined,
+  email: string,
+): {
   first_name: string;
   last_name: string;
 } {

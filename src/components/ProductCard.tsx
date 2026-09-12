@@ -1,11 +1,23 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, Heart } from "lucide-react";
 import { useState } from "react";
+import { useAuthUser } from "@/integrations/supabase/use-auth-user";
+import { libraryQueryOptions, ownsVariant } from "@/lib/medusa/library-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice, getVariant, type PolyTier, type Product } from "@/lib/products";
 
-export function ProductCard({ product, tier = "high" }: { product: Product; tier?: PolyTier }) {
+// `variantId` is present on catalogue products (see catalog.ts) and
+// absent on the static mock list; without it a card can never be "owned".
+type CardProduct = Product & { variantId?: string | null };
+
+export function ProductCard({ product, tier = "high" }: { product: CardProduct; tier?: PolyTier }) {
   const variant = getVariant(product, tier);
+  // Shared `["library"]` query (see library-query.ts) — one fetch for the
+  // whole grid, deduped by TanStack Query, and only when signed in.
+  const authUser = useAuthUser();
+  const { data: library } = useQuery(libraryQueryOptions(Boolean(authUser)));
+  const owned = ownsVariant(library, product.variantId ?? null);
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,7 +86,16 @@ export function ProductCard({ product, tier = "high" }: { product: Product; tier
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
             {product.subcategory ?? product.category} • {variant.polys}
           </p>
-          <p className="pt-1 text-sm font-semibold text-foreground">{formatPrice(variant.price)}</p>
+          {owned ? (
+            <p className="flex items-center gap-1 pt-1 text-sm font-semibold text-brand">
+              <Check className="h-3.5 w-3.5" aria-hidden />
+              In your library
+            </p>
+          ) : (
+            <p className="pt-1 text-sm font-semibold text-foreground">
+              {formatPrice(variant.price)}
+            </p>
+          )}
         </div>
       </Link>
       <button

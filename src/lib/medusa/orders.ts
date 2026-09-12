@@ -19,7 +19,9 @@ export const retrieveOrder = createServerFn({ method: "POST", strict: { output: 
     }
     const meta = claims["user_metadata"];
     const displayName =
-      meta && typeof meta === "object" && typeof (meta as Record<string, unknown>)["display_name"] === "string"
+      meta &&
+      typeof meta === "object" &&
+      typeof (meta as Record<string, unknown>)["display_name"] === "string"
         ? ((meta as Record<string, unknown>)["display_name"] as string)
         : undefined;
     return ordersServer.retrieveOrder(orderId, {
