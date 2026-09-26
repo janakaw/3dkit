@@ -1,8 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
+import {
+  CardCvcElement,
+  CardExpiryElement,
+  CardNumberElement,
+  Elements,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import type { StripeCardNumberElementChangeEvent } from "@stripe/stripe-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { HttpTypes } from "@medusajs/types";
+import {
+  AmericanExpress,
+  Mastercard,
+  Visa,
+} from "react-svg-credit-card-payment-icons/icons/flat-rounded";
+import { useTheme } from "@/components/ThemeProvider";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { formatPrice } from "@/lib/catalog";
 import { placeOrder, prepareCheckout } from "@/lib/medusa/cart";
@@ -35,6 +49,79 @@ function logCheckoutError(event: string, error: unknown, details?: Record<string
     ...(details ?? {}),
     error: error instanceof Error ? { message: error.message, name: error.name } : error,
   });
+}
+
+// Stripe's Elements render inside their own cross-origin iframes, so they
+// can't see this app's CSS variables or its `.dark` class — `color:
+// "inherit"` only resolves once, at mount, and never covers the placeholder
+// or invalid-state colors anyway (that's the reported dark-mode contrast
+// bug). Instead the real theme colors are read straight off the DOM here and
+// handed to Stripe as literal values, then re-read and pushed again on every
+// theme toggle (see the `useEffect` in StripeCardForm below).
+//
+// The values MUST be converted to plain rgb() first: the browser serializes
+// our oklch() variables as e.g. `oklch(96.5% .002 260)`, and Stripe silently
+// fails to render an Element given that — no error, no console warning, just
+// an empty, unclickable box (verified in-browser). Painting the color onto a
+// 1×1 canvas and reading the pixel back gives an rgb() Stripe always accepts.
+function cssColorToRgb(color: string, fallback: string): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return fallback;
+  ctx.fillStyle = fallback;
+  ctx.fillStyle = color; // an unparseable value is ignored, leaving the fallback
+  ctx.fillRect(0, 0, 1, 1);
+  const [r = 0, g = 0, b = 0, a = 255] = ctx.getImageData(0, 0, 1, 1).data;
+  return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`;
+}
+
+type CardBrand = StripeCardNumberElementChangeEvent["brand"];
+
+// Accepted-card marks shown in the payment card's header. Chosen for the
+// target markets (US, Australia): Visa, Mastercard and Amex. Discover is
+// left out — it's rare in Australia (Stripe still accepts it). The keys are Stripe's `brand` values from the
+// card-number Element's change event, so the matching mark can be
+// highlighted once the shopper's card is recognised.
+const CARD_BRAND_ICONS: { brand: CardBrand; label: string; Icon: typeof Visa }[] = [
+  { brand: "visa", label: "Visa", Icon: Visa },
+  { brand: "mastercard", label: "Mastercard", Icon: Mastercard },
+  { brand: "amex", label: "American Express", Icon: AmericanExpress },
+];
+
+function CardBrandIcons({ brand }: { brand: CardBrand }) {
+  const recognised = CARD_BRAND_ICONS.some((b) => b.brand === brand);
+  return (
+    <ul className="flex items-center gap-1.5" aria-label="Accepted cards">
+      {CARD_BRAND_ICONS.map(({ brand: b, label, Icon }) => (
+        <li key={b}>
+          <Icon
+            role="img"
+            aria-label={label}
+            width={34}
+            height={22}
+            className={`transition-opacity ${recognised && brand !== b ? "opacity-30" : "opacity-100"}`}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function getStripeElementStyle() {
+  const rootStyle = getComputedStyle(document.documentElement);
+  const themeColor = (name: string, fallback: string) =>
+    cssColorToRgb(rootStyle.getPropertyValue(name).trim(), fallback);
+  return {
+    base: {
+      fontSize: "16px",
+      color: themeColor("--foreground", "#888888"),
+      "::placeholder": { color: themeColor("--muted-foreground", "#888888") },
+    },
+    invalid: {
+      color: themeColor("--destructive", "#e5484d"),
+    },
+  };
 }
 
 export const Route = createFileRoute("/_authenticated/checkout")({
@@ -70,8 +157,8 @@ function CheckoutPage() {
   }, [cart, navigate]);
 
   // No billing-details step: Medusa needs no address to complete a cart
-  // of digital goods, and Stripe's CardElement collects the postal code
-  // itself. `prepareCheckout` (cart.server.ts) does the rest server-side
+  // of digital goods, and the card form below collects just the postal
+  // code alongside the card. `prepareCheckout` (cart.server.ts) does the rest server-side
   // — Medusa customer session, cart email from the account, and a
   // pending Stripe payment session — in one idempotent call, so it simply
   // runs once per cart as the page mounts and the card form appears when
@@ -115,6 +202,7 @@ function CheckoutPage() {
   );
   const clientSecret = activeSession?.data?.["client_secret"] as string | undefined;
   const total = cart?.total ?? 0;
+  const [cardBrand, setCardBrand] = useState<CardBrand>("unknown");
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,16 +216,23 @@ function CheckoutPage() {
           <div className="space-y-6">
             {cart && total > 0 && (
               <section className="rounded-2xl border border-border p-6">
-                <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Payment
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Card Payment
+                  </h2>
+                  <CardBrandIcons brand={cardBrand} />
+                </div>
                 {cart.email && (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Receipt will be sent to <span className="text-foreground">{cart.email}</span>
                   </p>
                 )}
                 {clientSecret ? (
-                  <PaymentSection cart={cart} clientSecret={clientSecret} />
+                  <PaymentSection
+                    cart={cart}
+                    clientSecret={clientSecret}
+                    onBrandChange={setCardBrand}
+                  />
                 ) : (
                   <p className="mt-4 text-sm text-muted-foreground">
                     {prepareMutation.isError
@@ -183,9 +278,11 @@ function CheckoutPage() {
 function PaymentSection({
   cart,
   clientSecret,
+  onBrandChange,
 }: {
   cart: HttpTypes.StoreCart;
   clientSecret: string;
+  onBrandChange: (brand: CardBrand) => void;
 }) {
   // `getStripe()` returns null during SSR (Stripe.js needs `document`,
   // which doesn't exist there) — see stripe.ts. `useMemo` re-runs once
@@ -202,7 +299,7 @@ function PaymentSection({
 
   return (
     <Elements stripe={stripePromise}>
-      <StripeCardForm cart={cart} clientSecret={clientSecret} />
+      <StripeCardForm cart={cart} clientSecret={clientSecret} onBrandChange={onBrandChange} />
     </Elements>
   );
 }
@@ -210,17 +307,37 @@ function PaymentSection({
 function StripeCardForm({
   cart,
   clientSecret,
+  onBrandChange,
 }: {
   cart: HttpTypes.StoreCart;
   clientSecret: string;
+  onBrandChange: (brand: CardBrand) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [cardComplete, setCardComplete] = useState(false);
+  const [complete, setComplete] = useState({ number: false, expiry: false, cvc: false });
+  // Free-text on purpose: buyers are international (US ZIP / ZIP+4,
+  // Australian 4-digit postcodes, UK/Canadian alphanumeric codes), and
+  // Stripe only uses it for the issuer's address check.
+  const [postalCode, setPostalCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cardComplete =
+    complete.number && complete.expiry && complete.cvc && postalCode.trim() !== "";
+
+  // The three split Elements are mounted once and never remounted (that
+  // would drop whatever the shopper had already typed), so a theme toggle
+  // has to reach them via `.update()` rather than by passing new `options`.
+  useEffect(() => {
+    if (!elements) return;
+    const style = getStripeElementStyle();
+    elements.getElement(CardNumberElement)?.update({ style });
+    elements.getElement(CardExpiryElement)?.update({ style });
+    elements.getElement(CardCvcElement)?.update({ style });
+  }, [elements, theme]);
 
   // [checkout-logging + fix] `submitting` (React state) is what disables
   // the button, but it's read from a stale render closure and only takes
@@ -268,7 +385,7 @@ function StripeCardForm({
 
   const handlePlaceOrder = async () => {
     if (!stripe || !elements) return;
-    const card = elements.getElement(CardElement);
+    const card = elements.getElement(CardNumberElement);
     if (!card) return;
 
     // [fix] Synchronous re-entrancy guard — see placingOrderRef comment
@@ -289,10 +406,15 @@ function StripeCardForm({
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card,
-          // No billing address is collected (see the page comment above);
-          // the CardElement supplies the postal code with the card, and
-          // the email lets Stripe attach its receipt/fraud signals.
-          billing_details: { email: cart.email ?? null },
+          // No full billing address is collected (see the page comment
+          // above) — just the postal code, from its own field since the
+          // split card Elements (unlike the old unified CardElement) don't
+          // collect it themselves. The email lets Stripe attach its
+          // receipt/fraud signals.
+          billing_details: {
+            email: cart.email ?? null,
+            address: { postal_code: postalCode.trim() },
+          },
         },
       });
 
@@ -348,14 +470,45 @@ function StripeCardForm({
   return (
     <div className="mt-4">
       <p className="mb-2 text-sm text-muted-foreground">Card details</p>
-      <div className="rounded-md border border-border bg-transparent px-4 py-3">
-        <CardElement
-          options={{ style: { base: { fontSize: "16px", color: "inherit" } } }}
+      <div className="space-y-3 rounded-md border border-border bg-transparent px-4 py-3">
+        <CardNumberElement
+          // `disableLink` hides Stripe Link's "Save with Link" autofill
+          // button that otherwise appears inside the card-number field.
+          options={{ style: getStripeElementStyle(), disableLink: true }}
           onChange={(e) => {
-            setCardComplete(e.complete);
+            setComplete((c) => ({ ...c, number: e.complete }));
             setError(e.error?.message ?? null);
+            onBrandChange(e.brand);
           }}
         />
+        <div className="grid grid-cols-3 items-center gap-3 border-t border-border pt-3">
+          <CardExpiryElement
+            options={{ style: getStripeElementStyle() }}
+            onChange={(e) => {
+              setComplete((c) => ({ ...c, expiry: e.complete }));
+              setError(e.error?.message ?? null);
+            }}
+          />
+          <CardCvcElement
+            options={{ style: getStripeElementStyle() }}
+            onChange={(e) => {
+              setComplete((c) => ({ ...c, cvc: e.complete }));
+              setError(e.error?.message ?? null);
+            }}
+          />
+          <input
+            type="text"
+            autoComplete="postal-code"
+            autoCapitalize="characters"
+            spellCheck={false}
+            aria-label="Postal code"
+            placeholder="Postal code"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            maxLength={12}
+            className="w-full min-w-0 bg-transparent text-[16px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+          />
+        </div>
       </div>
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       <button
