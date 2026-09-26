@@ -56,6 +56,38 @@ export function cheapestVariantId(product: HttpTypes.StoreProduct): string | nul
   return cheapestVariant(product)?.id ?? null;
 }
 
+/**
+ * Medusa product-category handle -> the label the storefront filters on.
+ *
+ * Category pages match `product.category` against the entries in
+ * `src/lib/products.ts`'s `categories` (see category.$category.tsx), so the
+ * two lists have to agree exactly. Handles are stable; the category *names*
+ * in Medusa are plural ("Coffee Tables") and deliberately not used here.
+ *
+ * A product carries one category today. If that ever changes, the first
+ * recognised handle wins.
+ */
+const CATEGORY_LABELS: Record<string, string> = {
+  set: "Set",
+  sofa: "Sofa",
+  armchair: "Armchair",
+  coffeetable: "Coffee Table",
+  cabinet: "Cabinet",
+  ottoman: "Ottoman",
+  sidetable: "Side Table",
+  floorlamp: "Floor Lamp",
+  nightstand: "Nightstand",
+  pendantlight: "Pendant Light",
+};
+
+function categoryLabel(product: HttpTypes.StoreProduct): string {
+  for (const category of product.categories ?? []) {
+    const handle = category?.handle;
+    if (handle && CATEGORY_LABELS[handle]) return CATEGORY_LABELS[handle];
+  }
+  return PLACEHOLDER_TEXT;
+}
+
 export function adaptStoreProduct(product: HttpTypes.StoreProduct): Product {
   return {
     slug: product.handle ?? product.id,
@@ -64,8 +96,13 @@ export function adaptStoreProduct(product: HttpTypes.StoreProduct): Product {
     image: product.thumbnail ?? product.images?.[0]?.url ?? PLACEHOLDER_IMAGE,
     price: cheapestVariant(product)?.price ?? 0,
 
+    // Real backend data as of the living1 import (2026-09-13).
+    category: categoryLabel(product),
+    // Every set in the catalogue is a living-room set; the Set category
+    // page's sub-filter reads this.
+    ...(categoryLabel(product) === "Set" ? { subcategory: "Living Set" } : {}),
+
     // Not modeled on the backend yet — placeholders, see file header.
-    category: PLACEHOLDER_TEXT,
     style: PLACEHOLDER_TEXT,
     polys: PLACEHOLDER_TEXT,
     formats: PLACEHOLDER_TEXT,

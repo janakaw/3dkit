@@ -161,8 +161,8 @@ function ProductPage() {
                 src={gallery[active]}
                 alt={`${product.name} ${variant.label} 3D model render`}
                 width={1600}
-                height={1200}
-                className="aspect-[4/3] w-full object-cover"
+                height={900}
+                className="aspect-video w-full object-cover"
               />
               <button
                 onClick={() => step(-1)}
@@ -202,8 +202,8 @@ function ProductPage() {
                       alt={`${product.name} view ${i + 1}`}
                       loading="lazy"
                       width={320}
-                      height={240}
-                      className="aspect-[4/3] w-full object-cover"
+                      height={180}
+                      className="aspect-video w-full object-cover"
                     />
                   </button>
                 ))}

@@ -238,7 +238,9 @@ function MyModelsPage() {
 function UnlistedPurchaseCard({ entry }: { entry: LibraryEntry }) {
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="aspect-square overflow-hidden bg-secondary">
+      {/* 16:9 to match ProductCard — the two render side by side in the
+          Purchased grid, so a square here is immediately obvious. */}
+      <div className="aspect-video overflow-hidden bg-secondary">
         {entry.thumbnail && (
           <img
             src={entry.thumbnail}
