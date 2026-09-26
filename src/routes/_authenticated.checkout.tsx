@@ -9,7 +9,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import type { StripeCardNumberElementChangeEvent } from "@stripe/stripe-js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from "react";
 import type { HttpTypes } from "@medusajs/types";
 import {
   AmericanExpress,
@@ -22,6 +22,7 @@ import { formatPrice } from "@/lib/catalog";
 import { placeOrder, prepareCheckout } from "@/lib/medusa/cart";
 import { CART_QUERY_KEY, cartQueryOptions } from "@/lib/medusa/cart-query";
 import { LIBRARY_QUERY_KEY } from "@/lib/medusa/library-query";
+import { ORDERS_QUERY_KEY } from "@/lib/medusa/orders-query";
 import { getStripe } from "@/lib/medusa/stripe";
 
 // Only one payment provider is configured on the backend right now
@@ -83,7 +84,11 @@ type CardBrand = StripeCardNumberElementChangeEvent["brand"];
 // left out — it's rare in Australia (Stripe still accepts it). The keys are Stripe's `brand` values from the
 // card-number Element's change event, so the matching mark can be
 // highlighted once the shopper's card is recognised.
-const CARD_BRAND_ICONS: { brand: CardBrand; label: string; Icon: typeof Visa }[] = [
+const CARD_BRAND_ICONS: {
+  brand: CardBrand;
+  label: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+}[] = [
   { brand: "visa", label: "Visa", Icon: Visa },
   { brand: "mastercard", label: "Mastercard", Icon: Mastercard },
   { brand: "amex", label: "American Express", Icon: AmericanExpress },
@@ -363,6 +368,7 @@ function StripeCardForm({
       // so product pages flip to "In your library" (see library-query.ts).
       if (result.type === "order") {
         void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
       }
     },
     // Deliberately NOT invalidating/refetching the cart query here
@@ -543,6 +549,7 @@ function FreeOrderSection() {
       });
       if (result.type === "order") {
         void queryClient.invalidateQueries({ queryKey: LIBRARY_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
         void navigate({ to: "/order/$orderId/confirmed", params: { orderId: result.orderId } });
       } else {
         setError("Couldn't finalize the order — please try again.");

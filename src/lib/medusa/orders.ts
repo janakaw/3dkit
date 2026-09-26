@@ -7,6 +7,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { HttpTypes } from "@medusajs/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import * as ordersServer from "./orders.server";
+import { identityFromContext } from "./identity";
 
 export const retrieveOrder = createServerFn({ method: "POST", strict: { output: false } })
   .middleware([requireSupabaseAuth])
@@ -30,3 +31,9 @@ export const retrieveOrder = createServerFn({ method: "POST", strict: { output: 
       displayName,
     });
   });
+
+export const listOrders = createServerFn({ method: "POST", strict: { output: false } })
+  .middleware([requireSupabaseAuth])
+  .handler(({ context }): Promise<HttpTypes.StoreOrder[]> =>
+    ordersServer.listOrders(identityFromContext(context)),
+  );

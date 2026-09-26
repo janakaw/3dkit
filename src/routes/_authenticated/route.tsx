@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureMedusaSession } from "@/lib/medusa/auth";
+import { needsMfaCode } from "@/lib/mfa";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -9,8 +10,13 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) {
       // Carries the page someone was trying to reach (e.g. /checkout with
       // a cart full of items) through sign-in, so completing auth returns
-      // them there instead of always landing on /my-models — see
+      // them there instead of the default landing page (home) — see
       // signin.tsx's use of this same `redirect` search param.
+      throw redirect({ to: "/signin", search: { redirect: location.href } });
+    }
+    // Password entered but two-step verification code still owed: account
+    // pages stay closed until the code step is done (sign-in resumes there).
+    if (await needsMfaCode()) {
       throw redirect({ to: "/signin", search: { redirect: location.href } });
     }
     // Make sure Medusa knows this shopper as a customer before any page

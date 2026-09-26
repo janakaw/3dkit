@@ -4,20 +4,32 @@ import {
   ChevronDown,
   Facebook,
   Instagram,
+  Library,
   LogOut,
   Music2,
+  Receipt,
   Search,
+  Settings,
   ShoppingCart,
+  UserRound,
   Youtube,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { categories, categorySlug, setSubcategories } from "@/lib/products";
 import { SubscribeModal, SUBSCRIBE_EVENT } from "@/components/SubscribeModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { clearMedusaSession } from "@/lib/medusa/auth";
 import { cartQueryOptions } from "@/lib/medusa/cart-query";
 import { LIBRARY_QUERY_KEY } from "@/lib/medusa/library-query";
+import { ORDERS_QUERY_KEY } from "@/lib/medusa/orders-query";
 
 export function SiteHeader() {
   const [showSubscribe, setShowSubscribe] = useState(false);
@@ -70,9 +82,16 @@ export function SiteHeader() {
     // The library is per-person — don't let the next sign-in on this
     // browser see a cached copy of the previous shopper's purchases.
     queryClient.removeQueries({ queryKey: LIBRARY_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: ORDERS_QUERY_KEY });
     setUserName(null);
-    await navigate({ to: "/signin", replace: true });
+    // Back to the storefront, signed out (the account pages would only
+    // bounce to sign-in anyway).
+    await navigate({ to: "/", replace: true });
   };
+
+  // Sign-up collects a single display name ("Alex Morgan"), so the greeting
+  // uses its first word; without one, `userName` is already the email prefix.
+  const firstName = userName?.trim().split(/\s+/)[0] ?? "";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
@@ -124,7 +143,10 @@ export function SiteHeader() {
             )}
           <Link
             to="/midpoly"
-            className="rounded-full border border-brand px-3 py-1 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
+            // The nav is too crowded for this label on one line at any width (it
+            // wraps even at 1440px), so it's always two lines: `w-min` sizes the pill
+            // to the longer word instead of the width the flex row would give it.
+            className="w-min rounded-full border border-brand px-3 py-1 text-center text-sm font-semibold leading-tight text-brand transition-colors hover:bg-brand hover:text-brand-foreground"
           >
             Mid-Poly Furniture
           </Link>
@@ -163,42 +185,85 @@ export function SiteHeader() {
             )}
           </Link>
           {userName ? (
+            <AccountMenu firstName={firstName} onSignOut={signOut} />
+          ) : (
             <>
               <Link
-                to="/my-models"
-                className="hidden text-sm font-semibold text-brand transition-colors hover:text-foreground sm:block"
+                to="/signin"
+                className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
               >
-                My Models
+                Sign In
               </Link>
-              <button
-                type="button"
-                onClick={signOut}
-                aria-label="Sign out"
-                title={`Sign out ${userName}`}
-                className="hidden text-muted-foreground transition-colors hover:text-brand sm:block"
+              <Link
+                to="/signin"
+                search={{ mode: "signup" }}
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90"
               >
-                <LogOut className="h-5 w-5" aria-hidden />
-              </button>
+                Join
+              </Link>
             </>
-          ) : (
-            <Link
-              to="/signin"
-              className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
-            >
-              Sign In
-            </Link>
           )}
-          <Link
-            to="/signin"
-            search={{ mode: "signup" }}
-            className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90"
-          >
-            Join
-          </Link>
         </div>
       </div>
       <SubscribeModal open={showSubscribe} onClose={() => setShowSubscribe(false)} />
     </header>
+  );
+}
+
+// Amazon-style account menu: a two-line "Hello, <name> / Account" trigger
+// (just an icon on narrow screens) opening the account pages and Sign Out.
+function AccountMenu({ firstName, onSignOut }: { firstName: string; onSignOut: () => void }) {
+  const itemClass = "cursor-pointer gap-2.5 px-3 py-2 text-sm";
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        aria-label="Account menu"
+        className="group flex items-center gap-1.5 rounded-lg px-1 py-1 text-left text-foreground outline-none transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <UserRound
+          className="h-5 w-5 text-muted-foreground group-hover:text-brand sm:hidden"
+          aria-hidden
+        />
+        <span className="hidden flex-col leading-tight sm:flex">
+          <span className="max-w-[9rem] truncate text-xs text-muted-foreground">
+            Hello, {firstName}
+          </span>
+          <span className="text-sm font-semibold">Account</span>
+        </span>
+        <ChevronDown
+          className="hidden h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 sm:block"
+          aria-hidden
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={10} className="w-52 rounded-xl p-1.5">
+        <div className="px-3 pb-2 pt-1.5 text-xs text-muted-foreground sm:hidden">
+          Hello, {firstName}
+        </div>
+        <DropdownMenuItem asChild className={itemClass}>
+          <Link to="/my-models">
+            <Library className="h-4 w-4" aria-hidden />
+            My Models
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className={itemClass}>
+          <Link to="/account/payments">
+            <Receipt className="h-4 w-4" aria-hidden />
+            Payments
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className={itemClass}>
+          <Link to="/account/settings">
+            <Settings className="h-4 w-4" aria-hidden />
+            Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className={itemClass} onSelect={() => void onSignOut()}>
+          <LogOut className="h-4 w-4" aria-hidden />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

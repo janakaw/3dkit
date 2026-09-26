@@ -57,3 +57,23 @@ export async function retrieveOrder(
 
   return order;
 }
+
+/**
+ * Every order the signed-in shopper has placed, newest first — backs the
+ * Account → Payments page. Medusa's `/store/orders` list is already scoped
+ * to the authenticated customer, so no per-order ownership check is needed
+ * here. Prices come from the order's own line items, i.e. what was actually
+ * charged at the time, not today's catalogue price.
+ */
+export async function listOrders(
+  identity: EnsureMedusaSessionInput,
+): Promise<HttpTypes.StoreOrder[]> {
+  await ensureMedusaSession(identity);
+  const { orders } = await sdk.store.order.list(
+    // `payment_status` isn't in the default store-order field set (same as
+    // `customer_id` above); items and totals are.
+    { fields: "+payment_status", order: "-created_at", limit: 200 },
+    getAuthHeaders(),
+  );
+  return orders;
+}

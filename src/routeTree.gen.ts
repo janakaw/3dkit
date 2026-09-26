@@ -24,12 +24,15 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated.checkout'
 import { Route as AuthenticatedMyModelsRouteImport } from './routes/_authenticated.my-models'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as CategoryCategoryRouteImport } from './routes/category.$category'
 import { Route as DebugMedusaSmokeRouteImport } from './routes/debug.medusa-smoke'
 import { Route as PaymentFailedRouteImport } from './routes/payment.failed'
 import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SubscribePlanRouteImport } from './routes/subscribe.$plan'
+import { Route as AuthenticatedAccountPaymentsRouteImport } from './routes/_authenticated.account.payments'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated.account.settings'
 import { Route as AuthenticatedOrderOrderIdConfirmedRouteImport } from './routes/_authenticated.order.$orderId.confirmed'
 
 const IndexRoute = IndexRouteImport.update({
@@ -106,6 +109,11 @@ const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
   path: '/auth/confirmed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryCategoryRoute = CategoryCategoryRouteImport.update({
   id: '/category/$category',
   path: '/category/$category',
@@ -136,6 +144,18 @@ const SubscribePlanRoute = SubscribePlanRouteImport.update({
   path: '/subscribe/$plan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountPaymentsRoute =
+  AuthenticatedAccountPaymentsRouteImport.update({
+    id: '/account/payments',
+    path: '/account/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account/settings',
+    path: '/account/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrderOrderIdConfirmedRoute =
   AuthenticatedOrderOrderIdConfirmedRouteImport.update({
     id: '/order/$orderId/confirmed',
@@ -158,12 +178,15 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
+  '/account/payments': typeof AuthenticatedAccountPaymentsRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRoutesByTo {
@@ -181,12 +204,15 @@ export interface FileRoutesByTo {
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
+  '/account/payments': typeof AuthenticatedAccountPaymentsRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRoutesById {
@@ -206,12 +232,15 @@ export interface FileRoutesById {
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/my-models': typeof AuthenticatedMyModelsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/category/$category': typeof CategoryCategoryRoute
   '/debug/medusa-smoke': typeof DebugMedusaSmokeRoute
   '/payment/failed': typeof PaymentFailedRoute
   '/payment/success': typeof PaymentSuccessRoute
   '/product/$slug': typeof ProductSlugRoute
   '/subscribe/$plan': typeof SubscribePlanRoute
+  '/_authenticated/account/payments': typeof AuthenticatedAccountPaymentsRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/order/$orderId/confirmed': typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 export interface FileRouteTypes {
@@ -231,12 +260,15 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/my-models'
     | '/auth/confirmed'
+    | '/auth/reset-password'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
+    | '/account/payments'
+    | '/account/settings'
     | '/order/$orderId/confirmed'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -254,12 +286,15 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/my-models'
     | '/auth/confirmed'
+    | '/auth/reset-password'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
+    | '/account/payments'
+    | '/account/settings'
     | '/order/$orderId/confirmed'
   id:
     | '__root__'
@@ -278,12 +313,15 @@ export interface FileRouteTypes {
     | '/_authenticated/checkout'
     | '/_authenticated/my-models'
     | '/auth/confirmed'
+    | '/auth/reset-password'
     | '/category/$category'
     | '/debug/medusa-smoke'
     | '/payment/failed'
     | '/payment/success'
     | '/product/$slug'
     | '/subscribe/$plan'
+    | '/_authenticated/account/payments'
+    | '/_authenticated/account/settings'
     | '/_authenticated/order/$orderId/confirmed'
   fileRoutesById: FileRoutesById
 }
@@ -301,6 +339,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   CategoryCategoryRoute: typeof CategoryCategoryRoute
   DebugMedusaSmokeRoute: typeof DebugMedusaSmokeRoute
   PaymentFailedRoute: typeof PaymentFailedRoute
@@ -416,6 +455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfirmedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$category': {
       id: '/category/$category'
       path: '/category/$category'
@@ -458,6 +504,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscribePlanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account/payments': {
+      id: '/_authenticated/account/payments'
+      path: '/account/payments'
+      fullPath: '/account/payments'
+      preLoaderRoute: typeof AuthenticatedAccountPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/order/$orderId/confirmed': {
       id: '/_authenticated/order/$orderId/confirmed'
       path: '/order/$orderId/confirmed'
@@ -471,12 +531,16 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedMyModelsRoute: typeof AuthenticatedMyModelsRoute
+  AuthenticatedAccountPaymentsRoute: typeof AuthenticatedAccountPaymentsRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedOrderOrderIdConfirmedRoute: typeof AuthenticatedOrderOrderIdConfirmedRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedMyModelsRoute: AuthenticatedMyModelsRoute,
+  AuthenticatedAccountPaymentsRoute: AuthenticatedAccountPaymentsRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedOrderOrderIdConfirmedRoute:
     AuthenticatedOrderOrderIdConfirmedRoute,
 }
@@ -498,6 +562,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   CategoryCategoryRoute: CategoryCategoryRoute,
   DebugMedusaSmokeRoute: DebugMedusaSmokeRoute,
   PaymentFailedRoute: PaymentFailedRoute,

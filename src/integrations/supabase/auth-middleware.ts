@@ -30,6 +30,31 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+// Two-step verification (MFA) — see the check in requireSupabaseAuth below.
+// Whether a user has an authenticator set up isn't in their token, so it's
+// looked up from Supabase and remembered briefly per Worker isolate: most
+// requests come from password-only (aal1) users without MFA, and they
+// shouldn't pay a Supabase round trip on every server call.
+const MFA_STATUS_TTL_MS = 60_000;
+const mfaStatusCache = new Map<string, { hasMfa: boolean; expires: number }>();
+
+async function userHasMfa(
+  supabase: ReturnType<typeof createClient<Database>>,
+  token: string,
+  userId: string,
+): Promise<boolean> {
+  const cached = mfaStatusCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached.hasMfa;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) {
+    throw new Error('Unauthorized: Invalid token');
+  }
+  const hasMfa = (data.user.factors ?? []).some((factor) => factor.status === 'verified');
+  if (mfaStatusCache.size > 5000) mfaStatusCache.clear();
+  mfaStatusCache.set(userId, { hasMfa, expires: Date.now() + MFA_STATUS_TTL_MS });
+  return hasMfa;
+}
+
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
@@ -96,6 +121,15 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
 
     if (!data.claims.sub) {
       throw new Error('Unauthorized: No user ID found in token');
+    }
+
+    // [edited by hand — keep when regenerating] A user with two-step
+    // verification on must have entered their code (aal2). A password-only
+    // (aal1) token for such a user is refused, so the code prompt in the
+    // browser can't be skipped by calling these server functions directly.
+    // (The Medusa backend's Supabase auth provider enforces the same rule.)
+    if (data.claims['aal'] !== 'aal2' && (await userHasMfa(supabase, token, data.claims.sub))) {
+      throw new Error('Unauthorized: Two-step verification required');
     }
 
     return next({

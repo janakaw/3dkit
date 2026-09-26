@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Heart, LogOut, ShoppingBag } from "lucide-react";
+import { Download, Heart, ShoppingBag } from "lucide-react";
 import { DownloadMenu } from "@/components/DownloadMenu";
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { clearMedusaSession } from "@/lib/medusa/auth";
 import { libraryQueryOptions } from "@/lib/medusa/library-query";
 import type { LibraryEntry } from "@/lib/medusa/library";
 import { getProducts, type PolyTier, type Product } from "@/lib/catalog";
@@ -134,18 +133,6 @@ function MyModelsPage() {
               {purchased.length} purchased · {saved.length} saved
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
-              await clearMedusaSession().catch(() => undefined);
-              await supabase.auth.signOut();
-              window.location.href = "/signin";
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-brand"
-          >
-            <LogOut className="h-4 w-4" aria-hidden />
-            Sign out
-          </button>
         </div>
 
         {/* Purchased */}
